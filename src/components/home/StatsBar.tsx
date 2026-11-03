@@ -1,57 +1,68 @@
-import { GraduationCap, BookOpen, Smile, Award } from "lucide-react";
+import { GraduationCap, Laptop, School, Trophy } from "lucide-react";
 
-const stats = [
+const highlights = [
   {
     icon: GraduationCap,
-    value: "500+",
-    label: "Graduates",
+    title: "Cambridge",
+    subtitle: "International Education",
   },
   {
-    icon: BookOpen,
-    value: "20+",
-    label: "Courses Offered",
+    icon: Laptop,
+    title: "TVET",
+    subtitle: "Technical & Digital Skills",
   },
   {
-    icon: Smile,
-    value: "95%",
-    label: "Student Satisfaction",
+    icon: School,
+    title: "Day & Boarding",
+    subtitle: "Flexible Learning Options",
   },
   {
-    icon: Award,
-    value: "TVET",
-    label: "Registered",
+    icon: Trophy,
+    title: "Holistic",
+    subtitle: "Student Development",
   },
 ];
 
 export default function StatsBar() {
   return (
-    <div className="relative z-20 mx-auto max-w-[1400px] -mt-1">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 bg-white shadow-xl rounded-b-lg overflow-hidden">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
+    <section
+      className="relative z-30 -mt-12 px-4 sm:px-8 lg:-mt-16"
+      aria-label="Innovar educational highlights"
+    >
+      <div className="mx-auto max-w-7xl rounded-2xl border border-slate-100 bg-white px-5 py-6 shadow-[0_12px_45px_rgba(25,25,65,0.10)] sm:px-8 lg:py-8">
+        <div className="grid grid-cols-2 gap-y-7 md:grid-cols-4 md:gap-y-0">
+          {highlights.map((item, index) => {
+            const Icon = item.icon;
 
-          return (
-            <div
-              key={index}
-              className={`flex items-center gap-4 p-8 ${
-                index !== stats.length - 1
-                  ? "border-b lg:border-b-0 lg:border-r border-gray-200"
-                  : ""
-              }`}
-            >
-              <Icon size={38} className="text-[#2d1b5e] flex-shrink-0" />
+            return (
+              <div
+                key={item.title}
+                className={`flex items-center gap-3 px-2 sm:gap-4 sm:px-5 ${
+                  index > 0 ? "md:border-l md:border-slate-200" : ""
+                }`}
+              >
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#F3EDFA] sm:h-12 sm:w-12">
+                  <Icon
+                    size={25}
+                    strokeWidth={1.8}
+                    className="text-[#542080]"
+                  />
+                </div>
 
-              <div>
-                <h3 className="text-3xl font-extrabold text-[#2d1b5e]">
-                  {stat.value}
-                </h3>
+                <div>
+                  <h3 className="text-sm font-extrabold leading-tight text-[#101A44] sm:text-base">
+                    {item.title}
+                  </h3>
 
-                <p className="text-sm text-gray-500">{stat.label}</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500 sm:text-sm">
+                    {item.subtitle}
+                  </p>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </section>
   );
 }

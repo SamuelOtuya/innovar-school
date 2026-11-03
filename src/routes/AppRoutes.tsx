@@ -31,6 +31,8 @@ import AddProgramme from "../admin/pages/AddProgramme";
 import EditProgramme from "../admin/pages/EditProgramme";
 import AddNews from "../admin/pages/AddNews";
 import EditNews from "../admin/pages/EditNews";
+import Academics from "../pages/Academics";
+import InnovarInstitute from "../pages/InnovarInstitute";
 export default function AppRoutes() {
   return (
     <BrowserRouter>
@@ -52,6 +54,8 @@ export default function AppRoutes() {
           <Route path="/programmes/:slug" element={<ProgrammeDetails />} />
           <Route path="/downloads" element={<Downloads />} />
           <Route path="/apply" element={<Application />} />
+          <Route path="/academics" element={<Academics />} />
+          <Route path="/innovar-institute" element={<InnovarInstitute />} />
         </Route>
 
         <Route path="/admin/login" element={<AdminLogin />} />

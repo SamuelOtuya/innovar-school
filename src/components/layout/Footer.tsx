@@ -1,380 +1,200 @@
-// src/components/layout/Footer.tsx
+import { Link } from "react-router-dom";
+import { ArrowRight, ExternalLink, GraduationCap, MapPin } from "lucide-react";
 
-import { Phone, Mail, MapPin, Clock, Globe, ExternalLink } from "lucide-react";
+import logo from "../../assets/logo.jpeg";
 
-import {
-  FaFacebookF,
-  FaLinkedinIn,
-  FaYoutube,
-  FaTiktok,
-  FaInstagram,
-  FaXTwitter,
-} from "react-icons/fa6";
+const quickLinks = [
+  { name: "Home", path: "/" },
+  { name: "About Us", path: "/about" },
+  { name: "Admissions", path: "/admissions" },
+  { name: "Campus Life", path: "/student-life" },
+  { name: "News & Events", path: "/news" },
+  { name: "Contact Us", path: "/contact" },
+];
+
+const academicLinks = [
+  { name: "Academics", path: "/academics" },
+  { name: "Kindergarten", path: "/academics" },
+  { name: "Primary Education", path: "/academics" },
+  { name: "Secondary & IGCSE", path: "/academics" },
+  { name: "Innovar Institute", path: "/courses" },
+  { name: "Gallery", path: "/gallery" },
+];
+
+const resourceLinks = [
+  { name: "Admissions", path: "/admissions" },
+  { name: "Programmes", path: "/courses" },
+  { name: "Downloads", path: "/downloads" },
+  { name: "News & Events", path: "/news" },
+];
 
 export default function Footer() {
+  const year = new Date().getFullYear();
+
   return (
-    <footer className="bg-[#2d1b5e]">
-      {/* Main Footer */}
-      <div className="border-b border-white/10 px-6 py-16 lg:px-16">
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-5">
+    <footer className="bg-[#101A44] text-white">
+      {/* Top accent */}
+      <div className="h-1 w-full bg-gradient-to-r from-[#092C80] via-[#542080] to-[#F5BE20]" />
+
+      <div className="mx-auto max-w-7xl px-5 pb-12 pt-16 sm:px-8 lg:pt-20">
+        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-white/10 text-[#f5a623] font-black">
-                KS
+            <Link to="/" className="mb-6 inline-flex items-center gap-3">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-white p-2">
+                <img
+                  src={logo}
+                  alt="Innovar logo"
+                  className="h-full w-full object-contain"
+                />
               </div>
 
               <div>
-                <h3 className="text-sm font-extrabold uppercase text-white">
-                  Kahawa Sukari
+                <h3 className="text-xl font-black tracking-wide text-white">
+                  INNOVAR
                 </h3>
 
-                <p className="text-[10px] uppercase text-white/60">
-                  Vocational &amp; Training Institute
+                <p className="max-w-[180px] text-[10px] font-semibold uppercase leading-4 tracking-wide text-white/65">
+                  International School & Institute
+                </p>
+              </div>
+            </Link>
+
+            <p className="max-w-sm text-sm leading-8 text-white/65">
+              Discover international academic pathways, practical technical
+              education and opportunities for personal development in Kakamega,
+              Kenya.
+            </p>
+
+            <div className="mt-6 flex items-center gap-2 text-sm font-bold italic text-[#F5BE20]">
+              <GraduationCap size={18} />
+              Aspire. Actualize. Inspire.
+            </div>
+          </div>
+
+          {/* Quick links */}
+          <div>
+            <h4 className="mb-6 text-sm font-extrabold text-white">
+              Quick Links
+            </h4>
+
+            <div className="mb-5 h-[3px] w-10 rounded-full bg-[#F5BE20]" />
+
+            <ul className="space-y-3">
+              {quickLinks.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    to={link.path}
+                    className="text-sm text-white/65 transition-colors hover:text-[#F5BE20]"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Academics */}
+          <div>
+            <h4 className="mb-6 text-sm font-extrabold text-white">
+              Our Education
+            </h4>
+
+            <div className="mb-5 h-[3px] w-10 rounded-full bg-[#F5BE20]" />
+
+            <ul className="space-y-3">
+              {academicLinks.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    to={link.path}
+                    className="text-sm text-white/65 transition-colors hover:text-[#F5BE20]"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Resources and location */}
+          <div>
+            <h4 className="mb-6 text-sm font-extrabold text-white">
+              Resources & Contact
+            </h4>
+
+            <div className="mb-5 h-[3px] w-10 rounded-full bg-[#F5BE20]" />
+
+            <ul className="mb-7 space-y-3">
+              {resourceLinks.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    to={link.path}
+                    className="text-sm text-white/65 transition-colors hover:text-[#F5BE20]"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            <div className="flex items-start gap-3">
+              <MapPin size={19} className="mt-1 shrink-0 text-[#F5BE20]" />
+
+              <div>
+                <p className="mb-1 text-sm font-bold text-white">Visit Us</p>
+
+                <p className="text-sm leading-7 text-white/65">
+                  Amalemba, off Kisumu–Kakamega Road
+                  <br />
+                  Kakamega, Kenya
                 </p>
               </div>
             </div>
 
-            <p className="mt-5 text-sm leading-7 text-white/60">
-              Kahawa Sukari Vocational &amp; Training Institute is an
-              institution committed to empowering learners with practical skills
-              for real-world success.
-            </p>
-
-            {/* Social Media */}
-            <div className="mt-5 flex flex-wrap gap-3">
-              <a
-                href="https://www.facebook.com/kahawasukarivti/"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="KSVTI Facebook"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 transition duration-300 hover:bg-[#f5a623]"
-              >
-                <FaFacebookF size={14} className="text-white" />
-              </a>
-
-              <a
-                href="https://www.instagram.com/kahawasukarivti/"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="KSVTI Instagram"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 transition duration-300 hover:bg-[#f5a623]"
-              >
-                <FaInstagram size={15} className="text-white" />
-              </a>
-
-              <a
-                href="https://www.linkedin.com/company/kahawasukarivti/"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="KSVTI LinkedIn"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 transition duration-300 hover:bg-[#f5a623]"
-              >
-                <FaLinkedinIn size={14} className="text-white" />
-              </a>
-
-              <a
-                href="https://twitter.com/ksvti"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="KSVTI X"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 transition duration-300 hover:bg-[#f5a623]"
-              >
-                <FaXTwitter size={14} className="text-white" />
-              </a>
-
-              <a
-                href="https://lite.tiktok.com/t/ZS96yyvtKdxAq-UXWVu/"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="KSVTI TikTok"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 transition duration-300 hover:bg-[#f5a623]"
-              >
-                <FaTiktok size={14} className="text-white" />
-              </a>
-
-              <a
-                href="https://www.youtube.com/@kahawasukarivti"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="KSVTI YouTube"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 transition duration-300 hover:bg-[#f5a623]"
-              >
-                <FaYoutube size={15} className="text-white" />
-              </a>
-            </div>
-          </div>
-
-          {/* Quick Links */}
-          <div>
-            <h4 className="mb-5 text-sm font-bold uppercase text-white">
-              Quick Links
-            </h4>
-
-            <ul className="space-y-3 text-sm text-white/60">
-              <li>
-                <a
-                  href="/"
-                  className="transition duration-300 hover:text-[#f5a623]"
-                >
-                  Home
-                </a>
-              </li>
-
-              <li>
-                <a
-                  href="/about"
-                  className="transition duration-300 hover:text-[#f5a623]"
-                >
-                  About Us
-                </a>
-              </li>
-
-              <li>
-                <a
-                  href="/courses"
-                  className="transition duration-300 hover:text-[#f5a623]"
-                >
-                  Courses
-                </a>
-              </li>
-
-              <li>
-                <a
-                  href="/student-life"
-                  className="transition duration-300 hover:text-[#f5a623]"
-                >
-                  Student Life
-                </a>
-              </li>
-
-              <li>
-                <a
-                  href="/news"
-                  className="transition duration-300 hover:text-[#f5a623]"
-                >
-                  News &amp; Events
-                </a>
-              </li>
-
-              <li>
-                <a
-                  href="/contact"
-                  className="transition duration-300 hover:text-[#f5a623]"
-                >
-                  Contact Us
-                </a>
-              </li>
-
-              <li>
-                <a
-                  href="/gallery"
-                  className="transition duration-300 hover:text-[#f5a623]"
-                >
-                  Gallery
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Popular Courses */}
-          <div>
-            <h4 className="mb-5 text-sm font-bold uppercase text-white">
-              Popular Courses
-            </h4>
-
-            <ul className="space-y-3 text-sm text-white/60">
-              <li>Baking &amp; Pastry</li>
-              <li>Hairdressing</li>
-              <li>Electrical Installation</li>
-              <li>Plumbing</li>
-              <li>ICT &amp; Computer Studies</li>
-              <li>CCTV Installation</li>
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h4 className="mb-5 text-sm font-bold uppercase text-white">
-              Contact Us
-            </h4>
-
-            <div className="space-y-4">
-              <a href="tel:+254717976448" className="group flex gap-3">
-                <Phone
-                  size={16}
-                  className="mt-1 flex-shrink-0 text-[#f5a623]"
-                />
-
-                <span className="text-sm text-white/60 transition duration-300 group-hover:text-white">
-                  +254 717 976 448
-                </span>
-              </a>
-
-              <a href="mailto:info@ksvti.co.ke" className="group flex gap-3">
-                <Mail size={16} className="mt-1 flex-shrink-0 text-[#f5a623]" />
-
-                <span className="break-all text-sm text-white/60 transition duration-300 group-hover:text-white">
-                  info@ksvti.co.ke
-                </span>
-              </a>
-
-              <div className="flex gap-3">
-                <MapPin
-                  size={16}
-                  className="mt-1 flex-shrink-0 text-[#f5a623]"
-                />
-
-                <span className="text-sm leading-6 text-white/60">
-                  Kahawa Sukari Estate, Mizpah Plaza, 4th Floor
-                </span>
-              </div>
-
-              <div className="flex gap-3">
-                <Clock
-                  size={16}
-                  className="mt-1 flex-shrink-0 text-[#f5a623]"
-                />
-
-                <span className="text-sm leading-6 text-white/60">
-                  Mon - Fri: 8:00 AM - 5:00 PM
-                  <br />
-                  Sat: 8:00 AM - 1:00 PM
-                </span>
-              </div>
-
-              <a
-                href="https://www.ksvti.co.ke"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex gap-3"
-              >
-                <Globe
-                  size={16}
-                  className="mt-1 flex-shrink-0 text-[#f5a623]"
-                />
-
-                <span className="text-sm text-white/60 transition duration-300 group-hover:text-white">
-                  www.ksvti.co.ke
-                </span>
-              </a>
-            </div>
-          </div>
-
-          {/* Map */}
-          <div>
-            <h4 className="mb-5 text-sm font-bold uppercase text-white">
-              Location
-            </h4>
-
-            <div className="h-40 overflow-hidden rounded-md border border-white/10 shadow-md">
-              <iframe
-                title="KSVTI Location Map"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15412.314516413671!2d36.92997479819463!3d-1.190544880879863!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x182f3fa20ca76fb3%3A0x1f0589302d8290be!2sMizpah%20House!5e0!3m2!1sen!2ske!4v1782551130339!5m2!1sen!2ske"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="strict-origin-when-cross-origin"
-              />
-            </div>
-
             <a
-              href="https://maps.google.com/?q=Mizpah+Plaza+Kahawa+Sukari"
+              href="https://www.google.com/maps/search/?api=1&query=Amalemba%20Kakamega%20Kenya"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 inline-flex items-center gap-2 text-xs font-medium text-[#f5a623] transition duration-300 hover:text-white"
+              className="mt-4 inline-flex items-center gap-2 text-xs font-bold text-[#F5BE20] hover:text-white"
             >
-              View location on Google Maps
-              <ExternalLink size={13} />
+              Find Us on Google Maps
+              <ExternalLink size={14} />
             </a>
           </div>
         </div>
-        <h4 className="text-center text-white font-bold uppercase tracking-wider text-sm justify-center">
-          Partners and Accreditation
-        </h4>
-        <div className="mt-6 flex flex-wrap justify-center gap-8 lg:gap-10">
-          {[
-            { src: "/partners/pfc.jpg", alt: "PFC" },
-            { src: "/partners/icm.png", alt: "ICM" },
-            { src: "/partners/nita.png", alt: "NITA" },
-            { src: "/partners/tvet.jpg", alt: "TVETA" },
-            { src: "/partners/knec.jpg", alt: "CIDDAC" },
-            { src: "/partners/moe.jpg", alt: "Ministry of Education" },
-          ].map((partner) => (
-            <div
-              key={partner.alt}
-              className="flex h-14 w-20 items-center justify-center"
-            >
-              <img
-                src={partner.src}
-                alt={partner.alt}
-                className="max-h-10 max-w-full object-contain opacity-80 transition duration-300 hover:scale-105 hover:opacity-100"
-              />
-            </div>
-          ))}
+
+        {/* Admissions banner */}
+        <div className="mt-14 flex flex-col items-start justify-between gap-6 rounded-2xl border border-white/10 bg-white/5 p-7 sm:flex-row sm:items-center sm:p-8">
+          <div>
+            <h4 className="mb-2 text-xl font-extrabold text-white">
+              Begin Your Innovar Journey
+            </h4>
+
+            <p className="text-sm leading-7 text-white/65">
+              Explore international education and practical training
+              opportunities at Innovar.
+            </p>
+          </div>
+
+          <Link
+            to="/admissions"
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-[#F5BE20] px-6 py-3.5 text-sm font-extrabold text-[#092C80] transition-colors hover:bg-[#FFD34D]"
+          >
+            Apply Now
+            <ArrowRight size={17} />
+          </Link>
         </div>
       </div>
 
-      {/* Partners and Accreditation */}
-      {/* Partners */}
-      {/* <div className="border-t border-white/10 px-6 lg:px-16 py-8">
-        <h4 className="text-center text-white font-bold uppercase tracking-wider text-sm">
-          Partners and Accreditation
-        </h4>
-
-        <div className="mt-6 flex flex-wrap justify-center gap-8 lg:gap-10">
-          {[
-            { src: "/partners/icm.png", alt: "ICM" },
-            { src: "/partners/nita.png", alt: "NITA" },
-            { src: "/partners/tvet.jpg", alt: "TVETA" },
-            { src: "/partners/ciddac.png", alt: "CIDDAC" },
-            { src: "/partners/moe.jpg", alt: "Ministry of Education" },
-          ].map((partner) => (
-            <div
-              key={partner.alt}
-              className="flex h-14 w-20 items-center justify-center"
-            >
-              <img
-                src={partner.src}
-                alt={partner.alt}
-                className="max-h-10 max-w-full object-contain opacity-80 transition duration-300 hover:scale-105 hover:opacity-100"
-              />
-            </div>
-          ))}
-        </div>
-      </div> */}
-
-      {/* Bottom Footer */}
-      {/* Bottom Footer */}
-      <div className="border-t border-white/10 px-6 py-5 lg:px-16">
-        <div className="flex flex-col gap-4 text-center lg:flex-row lg:items-center lg:justify-between">
-          {/* Left */}
-          <p className="text-xs text-white/40">
-            © 2026 Kahawa Sukari Vocational &amp; Training Institute. All Rights
-            Reserved.
+      {/* Bottom footer */}
+      <div className="border-t border-white/10">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-5 py-6 text-center sm:px-8 md:flex-row md:text-left">
+          <p className="text-xs text-white/45">
+            © {year} Innovar International School & Institute. All rights
+            reserved.
           </p>
 
-          <a
-            href="https://wa.me/254796577415?text=Hello%20Dev%20Sam,%20I%20would%20like%20to%20inquire%20about%20website%20design%20and%20development."
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-1 text-xs text-white/40 transition hover:text-[#f5a623]"
-          >
-            Designed &amp; Developed by
-            <span className="font-bold text-[#f5a623]">Dev Sam</span>
-            <ExternalLink size={13} />
-          </a>
-
-          {/* Middle */}
-          <div className="flex items-center justify-center gap-2 text-xs text-white/40">
-            <span>KSVTI</span>
-            <span>|</span>
-            <span>Ministry of Education Approved</span>
-          </div>
-
-          {/* Right */}
+          <p className="text-xs text-white/45">Aspire. Actualize. Inspire.</p>
         </div>
       </div>
     </footer>
