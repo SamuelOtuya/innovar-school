@@ -5,9 +5,9 @@ import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/effect-fade";
 
-import hero1 from "../../assets/images/hero11.jpg";
-import hero2 from "../../assets/images/hero23.jpg";
-import hero3 from "../../assets/images/hero13.jpg";
+import hero1 from "../../assets/images/innovar4.webp";
+import hero2 from "../../assets/images/innovar3.webp";
+import hero3 from "../../assets/images/innovar1.jpg";
 
 const slides = [
   {

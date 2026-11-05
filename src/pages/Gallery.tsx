@@ -57,7 +57,7 @@ export default function Gallery() {
             </p>
 
             <h2 className="text-3xl font-black uppercase text-[#2d1b5e] lg:text-4xl">
-              Life at KSVTI
+              Life at Innovar
             </h2>
 
             <div className="mx-auto mt-4 h-[3px] w-10 rounded bg-[#f5a623]" />

@@ -1,6 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, CalendarDays, ImageIcon, Newspaper } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarDays,
+  ImageIcon,
+  Newspaper,
+  RefreshCw,
+} from "lucide-react";
 
 import { supabase } from "../../services/supabase";
 
@@ -17,19 +23,17 @@ type NewsItem = {
 function formatDate(date: string | null) {
   if (!date) return null;
 
-  // Handle date-only strings without timezone shifts.
-  const parsed = new Date(
-    /^\d{4}-\d{2}-\d{2}$/.test(date) ? `${date}T12:00:00` : date,
-  );
+  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(date);
 
-  if (Number.isNaN(parsed.getTime())) {
-    return null;
-  }
+  const parsed = new Date(dateOnly ? `${date}T12:00:00Z` : date);
+
+  if (Number.isNaN(parsed.getTime())) return null;
 
   return new Intl.DateTimeFormat("en-KE", {
     day: "numeric",
     month: "short",
     year: "numeric",
+    timeZone: "Africa/Nairobi",
   }).format(parsed);
 }
 
@@ -37,32 +41,38 @@ export default function NewsSection() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let active = true;
 
     async function fetchNews() {
-      const { data, error: fetchError } = await supabase
-        .from("news_events")
-        .select("id,slug,title,category,event_date,image_url,excerpt")
-        .eq("status", "published")
-        .order("event_date", {
-          ascending: false,
-          nullsFirst: false,
-        })
-        .limit(3);
+      setLoading(true);
+      setError(false);
 
-      if (!active) return;
+      try {
+        const { data, error: fetchError } = await supabase
+          .from("news_events")
+          .select("id,slug,title,category,event_date,image_url,excerpt")
+          .eq("status", "published")
+          .order("event_date", {
+            ascending: false,
+            nullsFirst: false,
+          })
+          .limit(3);
 
-      if (fetchError) {
-        console.error("Failed to fetch Innovar news:", fetchError);
+        if (fetchError) throw fetchError;
+        if (!active) return;
+
+        setNews(data ?? []);
+      } catch (err) {
+        if (!active) return;
+
+        console.error("Failed to load Innovar news:", err);
         setError(true);
-      } else {
-        setNews(data || []);
-        setError(false);
+      } finally {
+        if (active) setLoading(false);
       }
-
-      setLoading(false);
     }
 
     fetchNews();
@@ -70,16 +80,20 @@ export default function NewsSection() {
     return () => {
       active = false;
     };
+  }, [retryKey]);
+
+  const retry = useCallback(() => {
+    setRetryKey((value) => value + 1);
   }, []);
 
   return (
     <section
       id="news"
-      className="bg-white px-5 py-20 sm:px-8 lg:py-24"
       aria-labelledby="news-heading"
+      className="bg-white px-5 py-20 sm:px-8 lg:py-24"
     >
       <div className="mx-auto max-w-7xl">
-        {/* Section heading */}
+        {/* Section Heading */}
         <div className="mx-auto mb-14 max-w-3xl text-center">
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#542080]">
             What's Happening at Innovar
@@ -96,17 +110,18 @@ export default function NewsSection() {
           <div className="mx-auto my-5 h-1 w-14 rounded-full bg-[#F5BE20]" />
 
           <p className="text-base leading-8 text-slate-600">
-            Stay connected with our school community, academic activities,
-            technical programmes and important announcements.
+            Discover the latest announcements, school activities, academic
+            developments and exciting moments from Innovar International School
+            and Innovar Institute.
           </p>
         </div>
 
-        {/* Loading skeleton */}
+        {/* Loading */}
         {loading ? (
           <div
             className="grid gap-7 md:grid-cols-3"
-            aria-label="Loading news"
             aria-busy="true"
+            aria-label="Loading news and events"
           >
             {Array.from({ length: 3 }).map((_, index) => (
               <div
@@ -114,6 +129,7 @@ export default function NewsSection() {
                 className="overflow-hidden rounded-2xl border border-slate-100 bg-white"
               >
                 <div className="h-52 animate-pulse bg-slate-200 motion-reduce:animate-none" />
+
                 <div className="space-y-4 p-6">
                   <div className="h-5 w-24 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" />
                   <div className="h-6 w-4/5 animate-pulse rounded bg-slate-200 motion-reduce:animate-none" />
@@ -124,44 +140,58 @@ export default function NewsSection() {
             ))}
           </div>
         ) : error ? (
-          <div className="mx-auto max-w-xl rounded-2xl border border-slate-200 bg-[#F8F9FE] p-10 text-center">
-            <Newspaper size={36} className="mx-auto mb-4 text-[#542080]" />
+          <div
+            role="status"
+            className="mx-auto max-w-xl rounded-2xl border border-slate-200 bg-[#F8F9FE] p-10 text-center"
+          >
+            <Newspaper size={38} className="mx-auto mb-4 text-[#542080]" />
 
-            <h3 className="mb-2 text-lg font-bold text-[#101A44]">
-              News temporarily unavailable
+            <h3 className="mb-3 text-lg font-extrabold text-[#101A44]">
+              News Temporarily Unavailable
             </h3>
 
-            <p className="text-sm leading-7 text-slate-600">
-              We couldn't load the latest updates. Please check again later.
+            <p className="mb-6 text-sm leading-7 text-slate-600">
+              We couldn't load the latest updates. Please try again.
             </p>
+
+            <button
+              type="button"
+              onClick={retry}
+              className="inline-flex items-center gap-2 rounded-lg bg-[#542080] px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-[#3C1461]"
+            >
+              <RefreshCw size={16} />
+              Try Again
+            </button>
           </div>
         ) : news.length === 0 ? (
           <div className="mx-auto max-w-xl rounded-2xl border border-slate-200 bg-[#F8F9FE] p-10 text-center">
-            <Newspaper size={36} className="mx-auto mb-4 text-[#542080]" />
+            <Newspaper size={38} className="mx-auto mb-4 text-[#542080]" />
 
-            <h3 className="mb-2 text-lg font-bold text-[#101A44]">
+            <h3 className="mb-3 text-lg font-extrabold text-[#101A44]">
               Stay Tuned
             </h3>
 
             <p className="text-sm leading-7 text-slate-600">
-              News, events and announcements from Innovar will appear here soon.
+              News, events and announcements from Innovar will appear here as
+              they are published.
             </p>
           </div>
         ) : (
-          <div className="grid gap-7 md:grid-cols-3">
+          <div className="grid gap-7 md:grid-cols-2 lg:grid-cols-3">
             {news.map((item) => {
               const displayDate = formatDate(item.event_date);
+              const articleUrl = `/news/${encodeURIComponent(item.slug)}`;
 
               return (
                 <article
                   key={item.id}
                   className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_5px_25px_rgba(25,25,65,0.05)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(25,25,65,0.12)] motion-reduce:transform-none"
                 >
-                  {/* News image */}
+                  {/* Image */}
                   <Link
-                    to={`/news/${item.slug}`}
-                    className="block overflow-hidden"
+                    to={articleUrl}
                     aria-label={`Read ${item.title}`}
+                    className="block overflow-hidden"
                   >
                     <div className="relative h-52 overflow-hidden bg-[#F0E9FA]">
                       {item.image_url ? (
@@ -169,6 +199,7 @@ export default function NewsSection() {
                           src={item.image_url}
                           alt={item.title}
                           loading="lazy"
+                          decoding="async"
                           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transform-none"
                         />
                       ) : (
@@ -177,11 +208,11 @@ export default function NewsSection() {
                         </div>
                       )}
 
-                      <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#101A44]/25 to-transparent" />
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#101A44]/25 to-transparent" />
                     </div>
                   </Link>
 
-                  {/* News content */}
+                  {/* Content */}
                   <div className="flex flex-1 flex-col p-6">
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                       <span className="rounded-full bg-[#F1EBFA] px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wide text-[#542080]">
@@ -191,7 +222,8 @@ export default function NewsSection() {
                       {displayDate && (
                         <span className="flex items-center gap-1.5 text-xs text-slate-500">
                           <CalendarDays size={14} className="text-[#B8860B]" />
-                          <time dateTime={item.event_date || undefined}>
+
+                          <time dateTime={item.event_date?.slice(0, 10)}>
                             {displayDate}
                           </time>
                         </span>
@@ -199,22 +231,19 @@ export default function NewsSection() {
                     </div>
 
                     <h3 className="mb-3 text-lg font-extrabold leading-snug text-[#101A44] transition-colors group-hover:text-[#542080]">
-                      <Link
-                        to={`/news/${item.slug}`}
-                        className="hover:underline"
-                      >
+                      <Link to={articleUrl} className="hover:underline">
                         {item.title}
                       </Link>
                     </h3>
 
                     <p className="mb-6 line-clamp-3 text-sm leading-7 text-slate-600">
                       {item.excerpt ||
-                        "Discover the latest updates and activities from Innovar."}
+                        "Read the latest updates and activities from the Innovar community."}
                     </p>
 
                     <div className="mt-auto border-t border-slate-100 pt-4">
                       <Link
-                        to={`/news/${item.slug}`}
+                        to={articleUrl}
                         className="inline-flex items-center gap-2 text-sm font-bold text-[#542080] transition-colors hover:text-[#B8860B]"
                       >
                         Read More
@@ -231,7 +260,7 @@ export default function NewsSection() {
           </div>
         )}
 
-        {/* View all */}
+        {/* View All */}
         <div className="mt-12 text-center">
           <Link
             to="/news"

@@ -47,7 +47,7 @@ export default function News() {
     <>
       <PageHeader
         title="News & Events"
-        subtitle="Stay updated with announcements, events, and opportunities at KSVTI."
+        subtitle="Stay updated with announcements, events, and opportunities at Innovar."
       />
 
       <section className="bg-white px-6 py-20 lg:px-16">

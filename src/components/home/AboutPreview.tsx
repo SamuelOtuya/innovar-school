@@ -1,7 +1,7 @@
 import { ArrowRight, Eye, GraduationCap, Target } from "lucide-react";
 import { Link } from "react-router-dom";
 
-import aboutImage from "../../assets/images/about-preview.jpg";
+import aboutImage from "../../assets/images/innovar2.jpg";
 
 export default function AboutPreview() {
   return (

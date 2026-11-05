@@ -1,267 +1,669 @@
-import { useState } from "react";
+
+import { useEffect, useRef, useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
+import { Link } from "react-router-dom";
+import {
+  ArrowRight,
+  CheckCircle2,
+  ExternalLink,
+  GraduationCap,
+  Laptop,
+  LoaderCircle,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Phone,
+  Send,
+} from "lucide-react";
+
 import PageHeader from "../components/common/PageHeader";
-import { Clock, Mail, MapPin, MessageCircle, Phone, Send } from "lucide-react";
 import { supabase } from "../services/supabase";
 
-const contactCards = [
-  {
-    icon: Phone,
-    title: "Call Us",
-    text: "+254 717 976 448",
-    link: "tel:+254717976448",
-  },
-  {
-    icon: Mail,
-    title: "Email Us",
-    text: "info@ksvti.co.ke",
-    link: "mailto:info@ksvti.co.ke",
-  },
-  {
-    icon: MessageCircle,
-    title: "WhatsApp",
-    text: "Chat With Us",
-    link: "https://wa.me/254717976448",
-  },
-  {
-    icon: Clock,
-    title: "Working Hours",
-    text: "Mon - Fri: 8:00 AM - 5:00 PM",
-    link: "#",
-  },
-];
+/*
+ * Update these values when Innovar's
+ * permanent contact details are confirmed.
+ */
+const CONTACT = {
+  phones: [
+    {
+      label: "0720 658 818",
+      value: "+254720658818",
+    },
+    {
+      label: "0101 400 530",
+      value: "+254101400530",
+    },
+    {
+      label: "0795 636 384",
+      value: "+254795636384",
+    },
+  ],
+  email: "info@innovar.com",
+  whatsapp: "254720658818",
+  location: "Kisumu–Kakamega Highway, Kakamega, Kenya",
+};
+
+const mapQuery = encodeURIComponent(
+  "Innovar International School Kakamega Kenya"
+);
+
+const mapEmbedUrl =
+  `https://www.google.com/maps?q=${mapQuery}&output=embed`;
+
+const mapSearchUrl =
+  `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+
+const whatsappUrl =
+  `https://wa.me/${CONTACT.whatsapp}?text=${encodeURIComponent(
+    "Hello Innovar, I would like to enquire about your programmes and admissions."
+  )}`;
+
+type ContactForm = {
+  full_name: string;
+  email: string;
+  phone: string;
+  inquiry_type: string;
+  message: string;
+};
+
+const initialForm: ContactForm = {
+  full_name: "",
+  email: "",
+  phone: "",
+  inquiry_type: "",
+  message: "",
+};
+
+const inputClass =
+  "w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-sm text-[#101A44] outline-none transition-colors placeholder:text-slate-400 focus:border-[#542080] focus:ring-2 focus:ring-[#542080]/10";
 
 export default function Contact() {
+  const [form, setForm] = useState<ContactForm>(initialForm);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const [form, setForm] = useState({
-    full_name: "",
-    email: "",
-    phone: "",
-    inquiry_type: "",
-    message: "",
-  });
+  const mounted = useRef(true);
+
+  useEffect(() => {
+    mounted.current = true;
+
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   function handleChange(
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
+    event: ChangeEvent<
+      HTMLInputElement |
+      HTMLTextAreaElement |
+      HTMLSelectElement
+    >
   ) {
-    const { name, value } = e.target;
+    const { name, value } = event.target;
 
-    setForm((prev) => ({
-      ...prev,
+    setForm((previous) => ({
+      ...previous,
       [name]: value,
     }));
+
+    setErrorMessage("");
+    setSuccess(false);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    setSuccess(false);
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
-    setTimeout(() => {
-      setSuccess(false);
-    }, 8000);
+    if (saving) return;
 
-    const { error } = await supabase.from("contact_messages").insert({
-      full_name: form.full_name,
-      email: form.email,
-      phone: form.phone,
-      inquiry_type: form.inquiry_type || "General Inquiry",
-      message: form.message,
-    });
-
-    setSaving(false);
-
-    if (error) {
-      alert(error.message);
+    if (!form.email.trim() && !form.phone.trim()) {
+      setErrorMessage(
+        "Please provide either an email address or phone number so we can contact you."
+      );
       return;
     }
 
-    setSuccess(true);
+    if (!form.full_name.trim() || !form.message.trim()) {
+      setErrorMessage("Please complete the required fields.");
+      return;
+    }
 
-    setForm({
-      full_name: "",
-      email: "",
-      phone: "",
-      inquiry_type: "",
-      message: "",
-    });
+    setSaving(true);
+    setSuccess(false);
+    setErrorMessage("");
+
+    try {
+      const { error } = await supabase
+        .from("contact_messages")
+        .insert({
+          full_name: form.full_name.trim(),
+          email: form.email.trim() || null,
+          phone: form.phone.trim() || null,
+          inquiry_type:
+            form.inquiry_type || "General Inquiry",
+          message: form.message.trim(),
+        });
+
+      if (error) throw error;
+
+      if (!mounted.current) return;
+
+      setSuccess(true);
+      setForm(initialForm);
+    } catch (error) {
+      console.error("Contact form submission failed:", error);
+
+      if (!mounted.current) return;
+
+      setErrorMessage(
+        "We couldn't submit your message right now. Please try again or contact us by phone or email."
+      );
+    } finally {
+      if (mounted.current) setSaving(false);
+    }
   }
 
   return (
     <>
       <PageHeader
         title="Contact Us"
-        subtitle="Reach out to Kahawa Sukari Vocational & Training Institute."
+        subtitle="We're here to help with admissions, academic pathways, institute programmes and general enquiries."
       />
 
-      <section className="bg-white px-6 py-20 lg:px-16">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-4">
-          {contactCards.map((card) => {
-            const Icon = card.icon;
+      {/* Contact details */}
+      <section className="bg-white px-5 py-20 sm:px-8 lg:py-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="mx-auto mb-12 max-w-3xl text-center">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#542080]">
+              Get in Touch
+            </p>
 
-            return (
+            <h2 className="text-3xl font-extrabold text-[#101A44] sm:text-4xl">
+              We'd Love to Hear
+              <span className="text-[#542080]"> From You</span>
+            </h2>
+
+            <div className="mx-auto my-5 h-1 w-14 rounded-full bg-[#F5BE20]" />
+
+            <p className="text-sm leading-8 text-slate-600 sm:text-base">
+              Contact Innovar International School and
+              Innovar Institute for information about
+              learning opportunities, admissions and
+              other enquiries.
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {/* Phone */}
+            <div className="rounded-2xl border border-slate-100 bg-[#F8F9FE] p-7 transition-shadow hover:shadow-lg">
+              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-[#F1EBFA]">
+                <Phone
+                  size={27}
+                  className="text-[#542080]"
+                />
+              </div>
+
+              <h3 className="mb-4 text-lg font-extrabold text-[#101A44]">
+                Call Us
+              </h3>
+
+              <div className="space-y-2">
+                {CONTACT.phones.map((phone) => (
+                  <a
+                    key={phone.value}
+                    href={`tel:${phone.value}`}
+                    className="block text-sm font-semibold text-slate-600 transition-colors hover:text-[#542080]"
+                  >
+                    {phone.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Email */}
+            <div className="rounded-2xl border border-slate-100 bg-[#F8F9FE] p-7 transition-shadow hover:shadow-lg">
+              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-[#F1EBFA]">
+                <Mail
+                  size={27}
+                  className="text-[#542080]"
+                />
+              </div>
+
+              <h3 className="mb-4 text-lg font-extrabold text-[#101A44]">
+                Email Us
+              </h3>
+
               <a
-                key={card.title}
-                href={card.link}
-                className="rounded-lg bg-[#f5f5f5] p-7 text-center no-underline transition hover:-translate-y-1 hover:shadow-lg"
+                href={`mailto:${CONTACT.email}`}
+                className="break-all text-sm font-semibold text-slate-600 transition-colors hover:text-[#542080]"
               >
-                <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#2d1b5e] text-[#f5a623]">
-                  <Icon size={26} />
-                </div>
-
-                <h3 className="mb-2 text-sm font-black uppercase text-[#2d1b5e]">
-                  {card.title}
-                </h3>
-
-                <p className="text-sm text-gray-600">{card.text}</p>
+                {CONTACT.email}
               </a>
-            );
-          })}
+
+              <p className="mt-4 text-xs leading-6 text-slate-500">
+                Send us your questions or programme enquiries.
+              </p>
+            </div>
+
+            {/* WhatsApp */}
+            <div className="rounded-2xl border border-slate-100 bg-[#F8F9FE] p-7 transition-shadow hover:shadow-lg">
+              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-[#F1EBFA]">
+                <MessageCircle
+                  size={27}
+                  className="text-[#542080]"
+                />
+              </div>
+
+              <h3 className="mb-4 text-lg font-extrabold text-[#101A44]">
+                WhatsApp
+              </h3>
+
+              <p className="mb-5 text-sm leading-7 text-slate-600">
+                Start a conversation with our team.
+              </p>
+
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-bold text-[#542080] hover:text-[#B8860B]"
+              >
+                Chat With Us
+                <ExternalLink size={15} />
+              </a>
+            </div>
+
+            {/* Location */}
+            <div className="rounded-2xl border border-slate-100 bg-[#F8F9FE] p-7 transition-shadow hover:shadow-lg">
+              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-[#F1EBFA]">
+                <MapPin
+                  size={27}
+                  className="text-[#542080]"
+                />
+              </div>
+
+              <h3 className="mb-4 text-lg font-extrabold text-[#101A44]">
+                Visit Us
+              </h3>
+
+              <p className="text-sm leading-7 text-slate-600">
+                {CONTACT.location}
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="bg-[#f5f5f5] px-6 py-20 lg:px-16">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 lg:grid-cols-2">
-          <div className="rounded-lg bg-white p-8 shadow-md">
-            <p className="mb-3 text-xs font-bold uppercase tracking-[3px] text-[#f5a623]">
-              Send Us A Message
+      {/* Form and map */}
+      <section className="bg-[#F8F9FE] px-5 py-20 sm:px-8 lg:py-24">
+        <div className="mx-auto grid max-w-7xl gap-9 lg:grid-cols-2">
+          {/* Form */}
+          <div className="rounded-2xl border border-slate-100 bg-white p-7 shadow-sm sm:p-10">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#542080]">
+              Send Us a Message
             </p>
 
-            <h2 className="mb-6 text-3xl font-black uppercase text-[#2d1b5e]">
-              Make an Inquiry
+            <h2 className="mb-4 text-3xl font-extrabold text-[#101A44]">
+              Make an Enquiry
             </h2>
 
+            <div className="mb-6 h-1 w-14 rounded-full bg-[#F5BE20]" />
+
+            <p className="mb-8 text-sm leading-7 text-slate-600">
+              Complete the form below and our team
+              will review your enquiry.
+            </p>
+
             {success && (
-              <div className="mb-5 rounded-lg bg-green-100 p-4 text-sm font-semibold text-green-700">
-                Message sent successfully. We will get back to you shortly.
+              <div
+                role="status"
+                className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-5"
+              >
+                <CheckCircle2
+                  size={23}
+                  className="mt-0.5 shrink-0 text-emerald-600"
+                />
+
+                <div>
+                  <h3 className="font-bold text-emerald-800">
+                    Message Submitted Successfully
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-6 text-emerald-700">
+                    Thank you for contacting Innovar.
+                    Your enquiry has been received
+                    and is awaiting review.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {errorMessage && (
+              <div
+                role="alert"
+                className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-700"
+              >
+                {errorMessage}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              <input
-                name="full_name"
-                value={form.full_name}
-                onChange={handleChange}
-                className="w-full rounded border border-gray-200 p-4 outline-none focus:border-[#f5a623]"
-                placeholder="Full Name"
-                required
-              />
+              <div>
+                <label
+                  htmlFor="full_name"
+                  className="mb-2 block text-sm font-semibold text-[#101A44]"
+                >
+                  Full Name *
+                </label>
 
-              <input
-                name="email"
-                type="email"
-                value={form.email}
-                onChange={handleChange}
-                className="w-full rounded border border-gray-200 p-4 outline-none focus:border-[#f5a623]"
-                placeholder="Email Address"
-              />
+                <input
+                  id="full_name"
+                  name="full_name"
+                  type="text"
+                  value={form.full_name}
+                  onChange={handleChange}
+                  className={inputClass}
+                  placeholder="Enter your full name"
+                  autoComplete="name"
+                  maxLength={150}
+                  required
+                />
+              </div>
 
-              <input
-                name="phone"
-                value={form.phone}
-                onChange={handleChange}
-                className="w-full rounded border border-gray-200 p-4 outline-none focus:border-[#f5a623]"
-                placeholder="Phone Number"
-              />
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="mb-2 block text-sm font-semibold text-[#101A44]"
+                  >
+                    Email Address
+                  </label>
 
-              <select
-                name="inquiry_type"
-                value={form.inquiry_type}
-                onChange={handleChange}
-                className="w-full rounded border border-gray-200 p-4 outline-none focus:border-[#f5a623]"
-              >
-                <option value="">Select Inquiry Type</option>
-                <option value="Course Inquiry">Course Inquiry</option>
-                <option value="Admissions">Admissions</option>
-                <option value="Fees Structure">Fees Structure</option>
-                <option value="General Inquiry">General Inquiry</option>
-              </select>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    className={inputClass}
+                    placeholder="Your email"
+                    autoComplete="email"
+                    maxLength={254}
+                  />
+                </div>
 
-              <textarea
-                name="message"
-                value={form.message}
-                onChange={handleChange}
-                className="h-36 w-full rounded border border-gray-200 p-4 outline-none focus:border-[#f5a623]"
-                placeholder="Your Message"
-                required
-              />
+                <div>
+                  <label
+                    htmlFor="phone"
+                    className="mb-2 block text-sm font-semibold text-[#101A44]"
+                  >
+                    Phone Number
+                  </label>
+
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    value={form.phone}
+                    onChange={handleChange}
+                    className={inputClass}
+                    placeholder="e.g. 07XXXXXXXX"
+                    autoComplete="tel"
+                    maxLength={30}
+                  />
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-500">
+                Provide at least one contact method:
+                email or phone.
+              </p>
+
+              <div>
+                <label
+                  htmlFor="inquiry_type"
+                  className="mb-2 block text-sm font-semibold text-[#101A44]"
+                >
+                  Enquiry Type
+                </label>
+
+                <select
+                  id="inquiry_type"
+                  name="inquiry_type"
+                  value={form.inquiry_type}
+                  onChange={handleChange}
+                  className={inputClass}
+                >
+                  <option value="">
+                    Select enquiry type
+                  </option>
+
+                  <option value="School Admissions">
+                    International School Admissions
+                  </option>
+
+                  <option value="School Academics">
+                    School Academic Programmes
+                  </option>
+
+                  <option value="Day and Boarding">
+                    Day & Boarding
+                  </option>
+
+                  <option value="Institute Admissions">
+                    Innovar Institute Admissions
+                  </option>
+
+                  <option value="Institute Courses">
+                    Institute Training Programmes
+                  </option>
+
+                  <option value="Fees Structure">
+                    Fees & Payment Information
+                  </option>
+
+                  <option value="General Inquiry">
+                    General Enquiry
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="message"
+                  className="mb-2 block text-sm font-semibold text-[#101A44]"
+                >
+                  Your Message *
+                </label>
+
+                <textarea
+                  id="message"
+                  name="message"
+                  rows={6}
+                  value={form.message}
+                  onChange={handleChange}
+                  className={`${inputClass} resize-y`}
+                  placeholder="Tell us how we can help..."
+                  maxLength={5000}
+                  required
+                />
+              </div>
 
               <button
                 type="submit"
-                disabled={saving || success}
-                className={`inline-flex w-full items-center justify-center gap-2 rounded-lg px-8 py-4 font-bold text-white transition-all duration-300 ${
-                  success
-                    ? "bg-green-600 cursor-default"
-                    : "bg-[#2d1b5e] hover:bg-[#3d2680]"
-                } ${saving ? "opacity-70 cursor-not-allowed" : ""}`}
+                disabled={saving}
+                className="inline-flex w-full items-center justify-center gap-3 rounded-xl bg-[#542080] px-7 py-4 text-sm font-bold text-white transition-colors hover:bg-[#3C1461] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {saving
-                  ? "Sending..."
-                  : success
-                    ? "✓ Message Sent Successfully"
-                    : "Send Message"}
-
-                {!saving && <Send size={18} />}
+                {saving ? (
+                  <>
+                    <LoaderCircle
+                      size={19}
+                      className="animate-spin"
+                    />
+                    Sending Message...
+                  </>
+                ) : (
+                  <>
+                    Send Message
+                    <Send size={18} />
+                  </>
+                )}
               </button>
 
-              {success && (
-                <div className="rounded-lg border border-green-200 bg-green-50 p-5">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-sm font-bold text-white">
-                      ✓
-                    </div>
-
-                    <div>
-                      <h3 className="font-bold text-green-800">
-                        Message Successfully Sent
-                      </h3>
-
-                      <p className="mt-2 text-sm leading-6 text-green-700">
-                        Thank you for contacting
-                        <strong>
-                          {" "}
-                          Kahawa Sukari Vocational & Training Institute.
-                        </strong>
-                        <br />
-                        <br />
-                        We have successfully received your inquiry. A member of
-                        our team will review your message and get back to you as
-                        soon as possible through your phone number or email
-                        address.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <p className="text-center text-xs leading-6 text-slate-500">
+                Your details will be used to respond
+                to your enquiry.
+              </p>
             </form>
           </div>
 
-          <div className="overflow-hidden rounded-lg bg-white shadow-md">
-            <iframe
-              title="Kahawa Sukari Vocational & Training Institute Location"
-              src="https://www.google.com/maps?q=Mizpah%20Plaza%20Kahawa%20Sukari%20opposite%20Quickmart%20Supermarket&output=embed"
-              className="h-[420px] w-full border-0"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
+          {/* Location and support */}
+          <div className="flex flex-col gap-7">
+            <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+              <iframe
+                title="Innovar International School Kakamega area map"
+                src={mapEmbedUrl}
+                className="h-[380px] w-full border-0"
+                loading="lazy"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
 
-            <div className="p-7">
-              <div className="flex items-start gap-4">
-                <MapPin className="mt-1 flex-shrink-0 text-[#f5a623]" />
-                <div>
-                  <h3 className="mb-2 font-black uppercase text-[#2d1b5e]">
-                    Visit Our Campus
-                  </h3>
-                  <p className="text-sm leading-7 text-gray-600">
-                    Kahawa Sukari Estate, Mizpa Plaza, 4th Floor.
-                  </p>
+              <div className="p-7">
+                <div className="flex items-start gap-3">
+                  <MapPin
+                    size={22}
+                    className="mt-1 shrink-0 text-[#542080]"
+                  />
+
+                  <div>
+                    <h3 className="mb-2 text-lg font-extrabold text-[#101A44]">
+                      Visit Innovar
+                    </h3>
+
+                    <p className="mb-4 text-sm leading-7 text-slate-600">
+                      {CONTACT.location}
+                    </p>
+
+                    <a
+                      href={mapSearchUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm font-bold text-[#542080] hover:text-[#B8860B]"
+                    >
+                      Search on Google Maps
+                      <ExternalLink size={16} />
+                    </a>
+
+                    <p className="mt-3 text-xs text-slate-500">
+                      Confirm the exact campus pin
+                      before travelling.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
+
+            {/* Quick enquiries */}
+            <div className="rounded-2xl bg-[#101A44] p-8 text-white sm:p-10">
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#F5BE20]">
+                Explore Innovar
+              </p>
+
+              <h3 className="mb-5 text-2xl font-extrabold">
+                How Can We Help?
+              </h3>
+
+              <p className="mb-7 text-sm leading-8 text-white/75">
+                Find information about the school
+                or institute before making an enquiry.
+              </p>
+
+              <div className="space-y-4">
+                <Link
+                  to="/academics"
+                  className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 p-4 transition-colors hover:bg-white/10"
+                >
+                  <div className="flex items-center gap-3">
+                    <GraduationCap
+                      size={23}
+                      className="text-[#F5BE20]"
+                    />
+
+                    <span className="text-sm font-bold">
+                      International School
+                    </span>
+                  </div>
+
+                  <ArrowRight size={17} />
+                </Link>
+
+                <Link
+                  to="/institute"
+                  className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 p-4 transition-colors hover:bg-white/10"
+                >
+                  <div className="flex items-center gap-3">
+                    <Laptop
+                      size={23}
+                      className="text-[#F5BE20]"
+                    />
+
+                    <span className="text-sm font-bold">
+                      Innovar Institute
+                    </span>
+                  </div>
+
+                  <ArrowRight size={17} />
+                </Link>
+
+                <Link
+                  to="/admissions"
+                  className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 p-4 transition-colors hover:bg-white/10"
+                >
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2
+                      size={23}
+                      className="text-[#F5BE20]"
+                    />
+
+                    <span className="text-sm font-bold">
+                      Admissions Information
+                    </span>
+                  </div>
+
+                  <ArrowRight size={17} />
+                </Link>
+              </div>
+            </div>
           </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="bg-[#542080] px-5 py-16 sm:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-7 md:flex-row md:items-center">
+          <div>
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-[#F5BE20]">
+              Aspire. Actualize. Inspire.
+            </p>
+
+            <h2 className="text-2xl font-extrabold text-white sm:text-3xl">
+              Ready to Begin Your Innovar Journey?
+            </h2>
+
+            <p className="mt-3 text-sm leading-7 text-white/75">
+              Explore admissions and discover
+              the next step in your education.
+            </p>
+          </div>
+
+          <Link
+            to="/admissions"
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-[#F5BE20] px-7 py-4 text-sm font-bold text-[#092C80] transition-colors hover:bg-[#FFD34D]"
+          >
+            Explore Admissions
+            <ArrowRight size={18} />
+          </Link>
         </div>
       </section>
     </>

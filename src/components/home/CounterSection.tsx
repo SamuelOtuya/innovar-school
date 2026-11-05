@@ -10,9 +10,9 @@ import {
 import { Link } from "react-router-dom";
 
 // Replace these with actual Innovar photographs
-import scienceImage from "../../assets/images/hero11.jpg";
-import technologyImage from "../../assets/images/hero23.jpg";
-import sportsImage from "../../assets/images/hero13.jpg";
+import scienceImage from "../../assets/images/innovar4.webp";
+import technologyImage from "../../assets/images/innovar3.webp";
+import sportsImage from "../../assets/images/innovar1.jpg";
 import boardingImage from "../../assets/images/about-preview.jpg";
 
 const facilities = [
