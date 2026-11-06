@@ -26,7 +26,7 @@ export default function AdminTopbar() {
           <UserCircle className="text-[#2d1b5e]" size={30} />
           <div className="hidden sm:block">
             <p className="text-sm font-bold text-[#2d1b5e]">Admin</p>
-            <p className="text-xs text-gray-500">KSVTI</p>
+            <p className="text-xs text-gray-500">INNOVAR</p>
           </div>
         </div>
       </div>

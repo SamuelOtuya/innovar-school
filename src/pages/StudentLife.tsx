@@ -1,4 +1,4 @@
-
+﻿
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -13,7 +13,7 @@ import {
   HeartHandshake,
   ImageIcon,
   Lightbulb,
-  LoaderCircle,
+
   School,
   ShieldCheck,
   Trophy,
@@ -494,3 +494,4 @@ export default function StudentLife() {
     </>
   );
 }
+

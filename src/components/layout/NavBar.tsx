@@ -98,7 +98,7 @@ export default function Navbar() {
           ))}
 
           <Link
-            to="/admissions"
+            to="/apply"
             className="ml-3 inline-flex items-center gap-2 whitespace-nowrap rounded-lg bg-[#542080] px-5 py-3 text-xs font-extrabold text-white transition-colors hover:bg-[#3C1461]"
           >
             Apply Now

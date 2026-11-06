@@ -1,8 +1,8 @@
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
 import {
   ArrowRight,
   Baby,
-  BookOpen,
+
   BookOpenCheck,
   Brain,
   CheckCircle2,
@@ -16,7 +16,7 @@ import {
   Palette,
   School,
   ShieldCheck,
-  Target,
+
   Trophy,
   Users,
 } from "lucide-react";
@@ -46,7 +46,7 @@ const pathways = [
     id: "primary",
     stage: "Primary Education",
     title: "Primary School",
-    years: "Years 1–6",
+    years: "Years 1â€“6",
     description:
       "Building strong academic foundations, curiosity, confidence and independent learning through international primary education.",
     icon: BookOpenCheck,
@@ -59,7 +59,7 @@ const pathways = [
     id: "lower-secondary",
     stage: "Secondary Education",
     title: "Lower Secondary",
-    years: "Years 7–9",
+    years: "Years 7â€“9",
     description:
       "Strengthening subject knowledge, analytical thinking, problem-solving and readiness for further international study.",
     icon: FlaskConical,
@@ -72,7 +72,7 @@ const pathways = [
     id: "igcse",
     stage: "International Qualifications",
     title: "IGCSE",
-    years: "Years 10–11",
+    years: "Years 10â€“11",
     description:
       "Supporting learners as they work towards internationally recognised secondary qualifications through structured academic preparation.",
     icon: GraduationCap,
@@ -551,3 +551,4 @@ export default function Academics() {
     </>
   );
 }
+

@@ -34,7 +34,7 @@ export default function AdminSidebar() {
     <aside className="fixed left-0 top-0 z-50 hidden h-screen w-72 bg-[#2d1b5e] text-white lg:block">
       <div className="flex h-20 items-center border-b border-white/10 px-6">
         <div>
-          <h2 className="text-xl font-black uppercase">KSVTI Admin</h2>
+          <h2 className="text-xl font-black uppercase">INNOVAR Admin</h2>
           <p className="text-xs text-white/50">Website Management</p>
         </div>
       </div>

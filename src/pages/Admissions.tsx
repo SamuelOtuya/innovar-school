@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -17,7 +17,7 @@ import {
   School,
   Send,
   ShieldCheck,
-  Users,
+
 } from "lucide-react";
 
 import PageHeader from "../components/common/PageHeader";
@@ -60,17 +60,17 @@ const schoolLevels = [
   {
     icon: BookOpen,
     name: "Primary",
-    description: "Years 1–6",
+    description: "Years 1â€“6",
   },
   {
     icon: School,
     name: "Lower Secondary",
-    description: "Years 7–9",
+    description: "Years 7â€“9",
   },
   {
     icon: GraduationCap,
     name: "IGCSE",
-    description: "Years 10–11",
+    description: "Years 10â€“11",
   },
 ];
 
@@ -560,3 +560,4 @@ export default function Admissions() {
     </>
   );
 }
+

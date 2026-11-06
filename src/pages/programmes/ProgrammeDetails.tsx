@@ -1,19 +1,28 @@
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
   CalendarDays,
-  CheckCircle,
-  Clock,
+  CheckCircle2,
+  Clock3,
   GraduationCap,
+  Loader2,
+  Mail,
+  Sparkles,
   Users,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+
 import { supabase } from "../../services/supabase";
+import ProgrammeCard from "../../components/programmes/ProgrammeCard";
 
 type Programme = {
   id: string;
   slug: string;
   title: string;
-  category: string;
+  institution: string | null;
+  category: string | null;
   level: string | null;
   duration: string | null;
   intake: string[] | null;
@@ -29,220 +38,521 @@ type Programme = {
   status: string | null;
 };
 
+function institutionName(value: string | null) {
+  if (value === "school") {
+    return "Innovar International School";
+  }
+
+  if (value === "institute") {
+    return "Innovar Institute";
+  }
+
+  return "Innovar";
+}
+
+function cleanItems(items: string[] | null | undefined) {
+  return (items ?? []).filter(
+    (item) => typeof item === "string" && item.trim(),
+  );
+}
+
 export default function ProgrammeDetails() {
-  const { slug } = useParams();
+  const { slug } = useParams<{ slug: string }>();
 
   const [programme, setProgramme] = useState<Programme | null>(null);
   const [relatedProgrammes, setRelatedProgrammes] = useState<Programme[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [imageFailed, setImageFailed] = useState(false);
 
   useEffect(() => {
-    fetchProgramme();
-  }, [slug]);
+    let active = true;
 
-  async function fetchProgramme() {
-    if (!slug) return;
-
-    setLoading(true);
-
-    const { data, error } = await supabase
-      .from("programmes")
-      .select("*")
-      .eq("slug", slug)
-      .eq("status", "published")
-      .single();
-
-    if (error || !data) {
-      console.error(error);
+    async function fetchProgramme() {
+      setLoading(true);
+      setError("");
       setProgramme(null);
-      setLoading(false);
-      return;
+      setRelatedProgrammes([]);
+      setImageFailed(false);
+
+      if (!slug) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error: programmeError } = await supabase
+          .from("programmes")
+          .select(
+            `id,
+             slug,
+             title,
+             institution,
+             category,
+             level,
+             duration,
+             intake,
+             study_mode,
+             image_url,
+             featured,
+             short_description,
+             overview,
+             requirements,
+             learning_outcomes,
+             career_opportunities,
+             fees,
+             status`,
+          )
+          .eq("slug", slug)
+          .eq("status", "published")
+          .maybeSingle();
+
+        if (programmeError) throw programmeError;
+
+        if (!active) return;
+
+        if (!data) {
+          setProgramme(null);
+          return;
+        }
+
+        const current = data as Programme;
+        setProgramme(current);
+
+        // Related programmes must belong to the same institution.
+        if (!current.institution) return;
+
+        let relatedQuery = supabase
+          .from("programmes")
+          .select(
+            `id,
+             slug,
+             title,
+             institution,
+             category,
+             level,
+             duration,
+             intake,
+             study_mode,
+             image_url,
+             featured,
+             short_description,
+             overview,
+             requirements,
+             learning_outcomes,
+             career_opportunities,
+             fees,
+             status`,
+          )
+          .eq("status", "published")
+          .eq("institution", current.institution)
+          .neq("id", current.id);
+
+        if (current.category) {
+          relatedQuery = relatedQuery.eq("category", current.category);
+        }
+
+        const { data: related, error: relatedError } =
+          await relatedQuery.limit(3);
+
+        if (relatedError) {
+          console.error("Unable to load related programmes:", relatedError);
+        } else if (active) {
+          setRelatedProgrammes((related ?? []) as Programme[]);
+        }
+      } catch (err) {
+        console.error("Unable to load programme:", err);
+
+        if (active) {
+          setError("We couldn't load this programme. Please try again.");
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
     }
 
-    setProgramme(data);
+    void fetchProgramme();
 
-    const { data: related } = await supabase
-      .from("programmes")
-      .select("*")
-      .eq("status", "published")
-      .eq("category", data.category)
-      .neq("id", data.id)
-      .limit(3);
-
-    setRelatedProgrammes(related || []);
-    setLoading(false);
-  }
+    return () => {
+      active = false;
+    };
+  }, [slug]);
 
   if (loading) {
     return (
-      <section className="px-6 py-24 text-center">
-        <div className="mx-auto max-w-xl rounded-xl bg-[#f5f5f5] p-10 text-gray-500">
-          Loading programme...
-        </div>
+      <section
+        role="status"
+        className="flex min-h-[65vh] flex-col items-center justify-center bg-[#F8F9FE] px-6 text-center"
+      >
+        <Loader2 size={42} className="mb-5 animate-spin text-[#542080]" />
+        <h1 className="text-2xl font-extrabold text-[#101A44]">
+          Loading Programme
+        </h1>
+        <p className="mt-2 text-sm text-slate-500">
+          Retrieving programme information...
+        </p>
       </section>
     );
   }
 
-  if (!programme) {
+  if (error || !programme) {
     return (
-      <section className="px-6 py-24 text-center">
-        <h1 className="text-4xl font-black text-[#2d1b5e]">
-          Programme Not Found
+      <section className="flex min-h-[65vh] flex-col items-center justify-center bg-[#F8F9FE] px-6 py-20 text-center">
+        <BookOpen size={50} className="mb-6 text-[#542080]" />
+
+        <h1 className="text-3xl font-extrabold text-[#101A44]">
+          {error ? "Unable to Load Programme" : "Programme Not Found"}
         </h1>
+
+        <p className="mt-4 max-w-lg text-sm leading-7 text-slate-600">
+          {error ||
+            "This programme may be unavailable, unpublished or no longer listed."}
+        </p>
+
+        {error && (
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-6 rounded-xl border border-[#542080] px-6 py-3 font-bold text-[#542080] hover:bg-purple-50"
+          >
+            Try Again
+          </button>
+        )}
 
         <Link
           to="/programmes"
-          className="mt-6 inline-block rounded bg-[#f5a623] px-8 py-4 font-bold text-white"
+          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#F5BE20] px-7 py-3.5 font-bold text-[#101A44]"
         >
+          <ArrowLeft size={18} />
           Back to Programmes
         </Link>
       </section>
     );
   }
 
+  const isSchool = programme.institution === "school";
+  const institution = institutionName(programme.institution);
+
+  const primaryAction = {
+    label: isSchool ? "Apply for Admission" : "Apply for Programme",
+    to: `/apply?programme=${encodeURIComponent(programme.slug)}`,
+  };
+
+  const requirements = cleanItems(programme.requirements);
+  const outcomes = cleanItems(programme.learning_outcomes);
+  const careers = cleanItems(programme.career_opportunities);
+  const intakes = cleanItems(programme.intake);
+
+  const quickFacts = [
+    {
+      icon: GraduationCap,
+      label: "Level",
+      value: programme.level,
+    },
+    {
+      icon: Clock3,
+      label: "Duration",
+      value: programme.duration,
+    },
+    {
+      icon: CalendarDays,
+      label: "Intake",
+      value: intakes.length ? intakes.join(", ") : null,
+    },
+    {
+      icon: Users,
+      label: "Study Mode",
+      value: programme.study_mode,
+    },
+  ].filter(
+    (fact) => typeof fact.value === "string" && fact.value.trim().length > 0,
+  );
+
   return (
     <>
-      <section className="relative min-h-[460px] overflow-hidden bg-[#2d1b5e] px-6 py-24 lg:px-16">
-        <img
-          src={programme.image_url || "/images/course-placeholder.jpg"}
-          alt={programme.title}
-          className="absolute inset-0 h-full w-full object-cover opacity-25"
-        />
+      {/* Hero */}
+      <section className="relative isolate overflow-hidden bg-[#101A44] px-5 py-20 text-white sm:px-8 lg:px-16 lg:py-28">
+        {programme.image_url && !imageFailed && (
+          <img
+            src={programme.image_url}
+            alt=""
+            onError={() => setImageFailed(true)}
+            className="absolute inset-0 -z-20 h-full w-full object-cover opacity-40"
+          />
+        )}
 
-        <div className="absolute inset-0 bg-gradient-to-r from-[#2d1b5e] via-[#2d1b5e]/90 to-[#2d1b5e]/50" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#101A44] via-[#101A44]/95 to-[#542080]/75" />
 
-        <div className="relative z-10 mx-auto max-w-6xl">
-          <p className="mb-4 text-xs font-bold uppercase tracking-[3px] text-[#f5a623]">
-            {programme.category}
-          </p>
-
-          <h1 className="max-w-4xl text-4xl font-black uppercase leading-tight text-white lg:text-6xl">
-            {programme.title}
-          </h1>
-
-          <p className="mt-5 max-w-2xl text-white/75">
-            {programme.short_description ||
-              "Explore this practical training programme at KSVTI."}
-          </p>
-
-          <Link
-            to="/apply"
-            className="mt-8 inline-block rounded bg-[#f5a623] px-9 py-4 font-bold text-white hover:bg-[#d4891a]"
+        <div className="relative mx-auto max-w-7xl">
+          {/* Breadcrumb */}
+          <nav
+            aria-label="Breadcrumb"
+            className="mb-10 flex flex-wrap items-center gap-2 text-sm text-white/70"
           >
-            Apply Now
-          </Link>
+            <Link to="/" className="hover:text-[#F5BE20]">
+              Home
+            </Link>
+
+            <span>/</span>
+
+            <Link to="/programmes" className="hover:text-[#F5BE20]">
+              Programmes
+            </Link>
+
+            <span>/</span>
+
+            <span className="text-white">{programme.title}</span>
+          </nav>
+
+          <div className="max-w-4xl">
+            <div className="mb-6 flex flex-wrap items-center gap-3">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-xs font-bold backdrop-blur-sm">
+                {isSchool ? (
+                  <GraduationCap size={16} />
+                ) : (
+                  <BookOpen size={16} />
+                )}
+                {institution}
+              </span>
+
+              {programme.featured && (
+                <span className="inline-flex items-center gap-2 rounded-full bg-[#F5BE20] px-4 py-2 text-xs font-extrabold text-[#101A44]">
+                  <Sparkles size={15} />
+                  Featured Programme
+                </span>
+              )}
+            </div>
+
+            {programme.category && (
+              <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[#F5BE20]">
+                {programme.category}
+              </p>
+            )}
+
+            <h1 className="text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+              {programme.title}
+            </h1>
+
+            {programme.short_description && (
+              <p className="mt-6 max-w-2xl text-base leading-8 text-white/80 sm:text-lg">
+                {programme.short_description}
+              </p>
+            )}
+
+            <div className="mt-9 flex flex-wrap gap-4">
+              <Link
+                to={primaryAction.to}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#F5BE20] px-7 py-4 text-sm font-extrabold text-[#101A44] transition hover:bg-[#E5AB10]"
+              >
+                {primaryAction.label}
+                <ArrowRight size={18} />
+              </Link>
+
+              <Link
+                to="/programmes"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/40 px-7 py-4 text-sm font-bold text-white transition hover:bg-white/10"
+              >
+                <ArrowLeft size={18} />
+                All Programmes
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="bg-white px-6 py-16 lg:px-16">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-4">
-          <QuickFact
-            icon={<GraduationCap />}
-            label="Level"
-            value={programme.level || "Programme"}
-          />
-          <QuickFact
-            icon={<Clock />}
-            label="Duration"
-            value={programme.duration || "Duration TBA"}
-          />
-          <QuickFact
-            icon={<CalendarDays />}
-            label="Intake"
-            value={
-              programme.intake?.length
-                ? programme.intake.join(", ")
-                : "Intake TBA"
-            }
-          />
-          <QuickFact
-            icon={<Users />}
-            label="Mode"
-            value={programme.study_mode || "Full Time"}
-          />
-        </div>
-      </section>
+      {/* Quick facts */}
+      {quickFacts.length > 0 && (
+        <section className="border-b border-slate-100 bg-white px-5 py-12 sm:px-8 lg:px-16">
+          <div className="mx-auto grid max-w-7xl gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {quickFacts.map((fact) => {
+              const Icon = fact.icon;
 
-      <section className="bg-[#f5f5f5] px-6 py-20 lg:px-16">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 lg:grid-cols-3">
-          <div className="space-y-10 lg:col-span-2">
+              return (
+                <QuickFact
+                  key={fact.label}
+                  icon={<Icon size={23} />}
+                  label={fact.label}
+                  value={fact.value!}
+                />
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Main content */}
+      <section className="bg-[#F8F9FE] px-5 py-16 sm:px-8 lg:px-16 lg:py-20">
+        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
+          <div className="space-y-8">
             <ContentBlock title="Programme Overview">
-              <p>
-                {programme.overview ||
-                  "More information about this programme will be updated soon."}
+              <p className="whitespace-pre-line">
+                {programme.overview?.trim() ||
+                  programme.short_description?.trim() ||
+                  "Further information about this programme will be provided soon."}
               </p>
             </ContentBlock>
 
-            {programme.requirements?.length ? (
+            {requirements.length > 0 && (
               <ContentBlock title="Entry Requirements">
-                <List items={programme.requirements} />
+                <ItemList items={requirements} />
               </ContentBlock>
-            ) : null}
-
-            {programme.learning_outcomes?.length ? (
-              <ContentBlock title="What You Will Learn">
-                <List items={programme.learning_outcomes} />
-              </ContentBlock>
-            ) : null}
-
-            {programme.career_opportunities?.length ? (
-              <ContentBlock title="Career Opportunities">
-                <List items={programme.career_opportunities} />
-              </ContentBlock>
-            ) : null}
-          </div>
-
-          <aside className="h-fit rounded-lg bg-[#2d1b5e] p-8 text-white">
-            <h3 className="mb-4 text-2xl font-black uppercase">Need Help?</h3>
-
-            <p className="mb-6 text-sm leading-7 text-white/70">
-              Talk to our admissions office for guidance on entry requirements,
-              fees, and application steps.
-            </p>
-
-            {programme.fees && (
-              <div className="mb-6 rounded-lg bg-white/10 p-4">
-                <p className="text-xs uppercase text-white/50">Fees</p>
-                <h4 className="font-bold text-[#f5a623]">{programme.fees}</h4>
-              </div>
             )}
 
-            <Link
-              to="/contact"
-              className="block rounded bg-[#f5a623] px-6 py-4 text-center font-bold text-white"
-            >
-              Contact Admissions
-            </Link>
+            {outcomes.length > 0 && (
+              <ContentBlock
+                title={isSchool ? "Learning Objectives" : "What You Will Learn"}
+              >
+                <ItemList items={outcomes} />
+              </ContentBlock>
+            )}
+
+            {careers.length > 0 && (
+              <ContentBlock title="Career Opportunities">
+                <ItemList items={careers} />
+              </ContentBlock>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <aside className="h-fit space-y-6 lg:sticky lg:top-24">
+            <div className="overflow-hidden rounded-2xl bg-[#101A44] p-7 text-white shadow-lg sm:p-8">
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-[#F5BE20]">
+                <GraduationCap size={25} />
+              </div>
+
+              <h2 className="text-2xl font-extrabold">
+                Interested in This Programme?
+              </h2>
+
+              <p className="mt-4 text-sm leading-7 text-white/75">
+                Contact {institution} for guidance on programme requirements,
+                availability and the next steps.
+              </p>
+
+              {programme.fees?.trim() && (
+                <div className="mt-6 rounded-xl border border-white/15 bg-white/10 p-5">
+                  <p className="text-xs font-bold uppercase tracking-wider text-white/60">
+                    Programme Fees
+                  </p>
+
+                  <p className="mt-2 break-words text-lg font-extrabold text-[#F5BE20]">
+                    {programme.fees}
+                  </p>
+                </div>
+              )}
+
+              <Link
+                to={primaryAction.to}
+                className="mt-7 flex items-center justify-center gap-2 rounded-xl bg-[#F5BE20] px-6 py-4 text-center text-sm font-extrabold text-[#101A44] transition hover:bg-[#E5AB10]"
+              >
+                {primaryAction.label}
+                <ArrowRight size={18} />
+              </Link>
+
+              <Link
+                to="/contact"
+                className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-white/30 px-6 py-4 text-sm font-bold text-white transition hover:bg-white/10"
+              >
+                <Mail size={17} />
+                Contact Us
+              </Link>
+            </div>
+
+            <div className="rounded-2xl border border-slate-100 bg-white p-6">
+              <h3 className="font-extrabold text-[#101A44]">
+                About {institution}
+              </h3>
+
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                {isSchool
+                  ? "Explore the academic pathways and learning opportunities offered at Innovar International School."
+                  : "Discover practical learning and skills development opportunities offered at Innovar Institute."}
+              </p>
+
+              <Link
+                to={isSchool ? "/academics" : "/institute"}
+                className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#542080] hover:underline"
+              >
+                Learn More
+                <ArrowRight size={16} />
+              </Link>
+            </div>
           </aside>
         </div>
       </section>
 
+      {/* Related programmes */}
       {relatedProgrammes.length > 0 && (
-        <section className="bg-white px-6 py-20 lg:px-16">
-          <div className="mx-auto max-w-6xl">
-            <h2 className="mb-8 text-3xl font-black uppercase text-[#2d1b5e]">
-              Related Programmes
-            </h2>
+        <section className="bg-white px-5 py-16 sm:px-8 lg:px-16 lg:py-20">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-9 flex flex-wrap items-end justify-between gap-5">
+              <div>
+                <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-[#542080]">
+                  Continue Exploring
+                </p>
 
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+                <h2 className="text-3xl font-extrabold text-[#101A44]">
+                  Related Programmes
+                </h2>
+
+                <p className="mt-3 text-sm text-slate-500">
+                  Discover more learning opportunities at {institution}.
+                </p>
+              </div>
+
+              <Link
+                to="/programmes"
+                className="inline-flex items-center gap-2 text-sm font-bold text-[#542080] hover:underline"
+              >
+                View All Programmes
+                <ArrowRight size={17} />
+              </Link>
+            </div>
+
+            <div className="grid gap-7 md:grid-cols-2 lg:grid-cols-3">
               {relatedProgrammes.map((item) => (
-                <Link
+                <ProgrammeCard
                   key={item.id}
-                  to={`/programmes/${item.slug}`}
-                  className="rounded-lg bg-[#f5f5f5] p-6 no-underline transition hover:-translate-y-1 hover:shadow-lg"
-                >
-                  <h3 className="mb-2 font-black uppercase text-[#2d1b5e]">
-                    {item.title}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    {item.duration || "Duration TBA"}
-                  </p>
-                </Link>
+                  programme={{
+                    ...item,
+                    category: item.category ?? "",
+                  }}
+                />
               ))}
             </div>
           </div>
         </section>
       )}
+
+      {/* Closing CTA */}
+      <section className="bg-[#542080] px-5 py-16 text-white sm:px-8 lg:px-16">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#F5BE20]">
+              Aspire. Actualize. Inspire.
+            </p>
+
+            <h2 className="text-3xl font-extrabold">
+              Take the Next Step with Innovar
+            </h2>
+
+            <p className="mt-3 max-w-xl text-sm leading-7 text-white/75">
+              Explore our learning opportunities and contact our team for
+              further information.
+            </p>
+          </div>
+
+          <Link
+            to={primaryAction.to}
+            className="inline-flex items-center justify-center gap-2 self-start rounded-xl bg-[#F5BE20] px-7 py-4 text-sm font-extrabold text-[#101A44] transition hover:bg-[#E5AB10]"
+          >
+            {primaryAction.label}
+            <ArrowRight size={18} />
+          </Link>
+        </div>
+      </section>
     </>
   );
 }
@@ -252,15 +562,23 @@ function QuickFact({
   label,
   value,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   value: string;
 }) {
   return (
-    <div className="rounded-lg bg-[#f5f5f5] p-6">
-      <div className="mb-3 text-[#f5a623]">{icon}</div>
-      <p className="text-xs font-bold uppercase text-gray-500">{label}</p>
-      <h3 className="mt-1 font-black text-[#2d1b5e]">{value}</h3>
+    <div className="rounded-2xl border border-slate-100 bg-[#F8F9FE] p-6">
+      <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#F5BE20]/20 text-[#542080]">
+        {icon}
+      </div>
+
+      <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+        {label}
+      </p>
+
+      <p className="mt-2 break-words text-base font-extrabold text-[#101A44]">
+        {value}
+      </p>
     </div>
   );
 }
@@ -270,28 +588,30 @@ function ContentBlock({
   children,
 }: {
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
-    <div className="rounded-lg bg-white p-8 shadow-md">
-      <h2 className="mb-5 text-2xl font-black uppercase text-[#2d1b5e]">
-        {title}
-      </h2>
+    <div className="rounded-2xl border border-slate-100 bg-white p-7 shadow-sm sm:p-9">
+      <div className="mb-6 flex items-center gap-3">
+        <span className="h-8 w-1 rounded-full bg-[#F5BE20]" />
 
-      <div className="text-sm leading-8 text-gray-600">{children}</div>
+        <h2 className="text-2xl font-extrabold text-[#101A44]">{title}</h2>
+      </div>
+
+      <div className="text-sm leading-8 text-slate-600 sm:text-base">
+        {children}
+      </div>
     </div>
   );
 }
 
-function List({ items }: { items: string[] }) {
+function ItemList({ items }: { items: string[] }) {
   return (
-    <ul className="space-y-3">
+    <ul className="space-y-4">
       {items.map((item, index) => (
-        <li key={index} className="flex gap-3">
-          <CheckCircle
-            className="mt-1 flex-shrink-0 text-[#f5a623]"
-            size={18}
-          />
+        <li key={`${index}-${item}`} className="flex gap-3">
+          <CheckCircle2 size={20} className="mt-1 shrink-0 text-[#542080]" />
+
           <span>{item}</span>
         </li>
       ))}

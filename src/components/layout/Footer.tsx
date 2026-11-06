@@ -177,7 +177,7 @@ export default function Footer() {
           </div>
 
           <Link
-            to="/admissions"
+            to="/apply"
             className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-[#F5BE20] px-6 py-3.5 text-sm font-extrabold text-[#092C80] transition-colors hover:bg-[#FFD34D]"
           >
             Apply Now

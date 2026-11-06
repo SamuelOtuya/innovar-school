@@ -1,7 +1,7 @@
-
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import { Link } from "react-router-dom";
+
 import {
   ArrowRight,
   CheckCircle2,
@@ -20,23 +20,14 @@ import PageHeader from "../components/common/PageHeader";
 import { supabase } from "../services/supabase";
 
 /*
- * Update these values when Innovar's
- * permanent contact details are confirmed.
+ * Update these contact details when the institution
+ * confirms its permanent contact information.
  */
 const CONTACT = {
   phones: [
-    {
-      label: "0720 658 818",
-      value: "+254720658818",
-    },
-    {
-      label: "0101 400 530",
-      value: "+254101400530",
-    },
-    {
-      label: "0795 636 384",
-      value: "+254795636384",
-    },
+    { label: "0720 658 818", value: "+254720658818" },
+    { label: "0101 400 530", value: "+254101400530" },
+    { label: "0795 636 384", value: "+254795636384" },
   ],
   email: "info@innovar.com",
   whatsapp: "254720658818",
@@ -44,24 +35,24 @@ const CONTACT = {
 };
 
 const mapQuery = encodeURIComponent(
-  "Innovar International School Kakamega Kenya"
+  "Innovar International School Kakamega Kenya",
 );
 
-const mapEmbedUrl =
-  `https://www.google.com/maps?q=${mapQuery}&output=embed`;
+const mapEmbedUrl = `https://www.google.com/maps?q=${mapQuery}&output=embed`;
 
-const mapSearchUrl =
-  `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
+const mapSearchUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
 
-const whatsappUrl =
-  `https://wa.me/${CONTACT.whatsapp}?text=${encodeURIComponent(
-    "Hello Innovar, I would like to enquire about your programmes and admissions."
-  )}`;
+const whatsappUrl = `https://wa.me/${CONTACT.whatsapp}?text=${encodeURIComponent(
+  "Hello Innovar, I would like to enquire about your programmes and admissions.",
+)}`;
+
+type Institution = "" | "school" | "institute" | "general";
 
 type ContactForm = {
   full_name: string;
   email: string;
   phone: string;
+  institution: Institution;
   inquiry_type: string;
   message: string;
 };
@@ -70,8 +61,69 @@ const initialForm: ContactForm = {
   full_name: "",
   email: "",
   phone: "",
+  institution: "",
   inquiry_type: "",
   message: "",
+};
+
+const inquiryOptions: Record<
+  Exclude<Institution, "">,
+  { value: string; label: string }[]
+> = {
+  school: [
+    {
+      value: "School Admissions",
+      label: "School Admissions",
+    },
+    {
+      value: "School Academics",
+      label: "Academic Programmes",
+    },
+    {
+      value: "School Day and Boarding",
+      label: "Day & Boarding",
+    },
+    {
+      value: "School Fees",
+      label: "School Fees",
+    },
+    {
+      value: "School General Enquiry",
+      label: "Other School Enquiry",
+    },
+  ],
+  institute: [
+    {
+      value: "Institute Admissions",
+      label: "Institute Admissions",
+    },
+    {
+      value: "Institute Courses",
+      label: "Training Programmes",
+    },
+    {
+      value: "Institute Fees",
+      label: "Institute Fees",
+    },
+    {
+      value: "Institute General Enquiry",
+      label: "Other Institute Enquiry",
+    },
+  ],
+  general: [
+    {
+      value: "General Inquiry",
+      label: "General Enquiry",
+    },
+    {
+      value: "Partnerships",
+      label: "Partnerships",
+    },
+    {
+      value: "Other Inquiry",
+      label: "Other Enquiry",
+    },
+  ],
 };
 
 const inputClass =
@@ -95,16 +147,15 @@ export default function Contact() {
 
   function handleChange(
     event: ChangeEvent<
-      HTMLInputElement |
-      HTMLTextAreaElement |
-      HTMLSelectElement
-    >
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) {
     const { name, value } = event.target;
 
     setForm((previous) => ({
       ...previous,
       [name]: value,
+      ...(name === "institution" ? { inquiry_type: "" } : {}),
     }));
 
     setErrorMessage("");
@@ -116,15 +167,20 @@ export default function Contact() {
 
     if (saving) return;
 
+    if (!form.full_name.trim() || !form.message.trim()) {
+      setErrorMessage("Please complete the required fields.");
+      return;
+    }
+
     if (!form.email.trim() && !form.phone.trim()) {
       setErrorMessage(
-        "Please provide either an email address or phone number so we can contact you."
+        "Please provide either an email address or phone number.",
       );
       return;
     }
 
-    if (!form.full_name.trim() || !form.message.trim()) {
-      setErrorMessage("Please complete the required fields.");
+    if (!form.institution || !form.inquiry_type) {
+      setErrorMessage("Please select an institution and enquiry type.");
       return;
     }
 
@@ -133,16 +189,20 @@ export default function Contact() {
     setErrorMessage("");
 
     try {
-      const { error } = await supabase
-        .from("contact_messages")
-        .insert({
-          full_name: form.full_name.trim(),
-          email: form.email.trim() || null,
-          phone: form.phone.trim() || null,
-          inquiry_type:
-            form.inquiry_type || "General Inquiry",
-          message: form.message.trim(),
-        });
+      /*
+       * The institution selection is encoded into
+       * inquiry_type. No database migration is needed.
+       *
+       * Never insert the institution field unless
+       * contact_messages has that column.
+       */
+      const { error } = await supabase.from("contact_messages").insert({
+        full_name: form.full_name.trim(),
+        email: form.email.trim() || null,
+        phone: form.phone.trim() || null,
+        inquiry_type: form.inquiry_type,
+        message: form.message.trim(),
+      });
 
       if (error) throw error;
 
@@ -156,18 +216,22 @@ export default function Contact() {
       if (!mounted.current) return;
 
       setErrorMessage(
-        "We couldn't submit your message right now. Please try again or contact us by phone or email."
+        "We couldn't submit your message right now. Please try again or contact us directly.",
       );
     } finally {
       if (mounted.current) setSaving(false);
     }
   }
 
+  const availableInquiryOptions = form.institution
+    ? inquiryOptions[form.institution]
+    : [];
+
   return (
     <>
       <PageHeader
         title="Contact Us"
-        subtitle="We're here to help with admissions, academic pathways, institute programmes and general enquiries."
+        subtitle="Get in touch with Innovar International School and Innovar Institute for admissions, academic programmes and general enquiries."
       />
 
       {/* Contact details */}
@@ -186,56 +250,32 @@ export default function Contact() {
             <div className="mx-auto my-5 h-1 w-14 rounded-full bg-[#F5BE20]" />
 
             <p className="text-sm leading-8 text-slate-600 sm:text-base">
-              Contact Innovar International School and
-              Innovar Institute for information about
-              learning opportunities, admissions and
-              other enquiries.
+              Whether you are interested in school admissions, institute
+              training, or general information, our team is here to assist.
             </p>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {/* Phone */}
-            <div className="rounded-2xl border border-slate-100 bg-[#F8F9FE] p-7 transition-shadow hover:shadow-lg">
-              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-[#F1EBFA]">
-                <Phone
-                  size={27}
-                  className="text-[#542080]"
-                />
-              </div>
-
-              <h3 className="mb-4 text-lg font-extrabold text-[#101A44]">
-                Call Us
-              </h3>
-
+            <ContactCard icon={<Phone size={27} />} title="Call Us">
               <div className="space-y-2">
                 {CONTACT.phones.map((phone) => (
                   <a
                     key={phone.value}
                     href={`tel:${phone.value}`}
-                    className="block text-sm font-semibold text-slate-600 transition-colors hover:text-[#542080]"
+                    className="block text-sm font-semibold text-slate-600 hover:text-[#542080]"
                   >
                     {phone.label}
                   </a>
                 ))}
               </div>
-            </div>
+            </ContactCard>
 
             {/* Email */}
-            <div className="rounded-2xl border border-slate-100 bg-[#F8F9FE] p-7 transition-shadow hover:shadow-lg">
-              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-[#F1EBFA]">
-                <Mail
-                  size={27}
-                  className="text-[#542080]"
-                />
-              </div>
-
-              <h3 className="mb-4 text-lg font-extrabold text-[#101A44]">
-                Email Us
-              </h3>
-
+            <ContactCard icon={<Mail size={27} />} title="Email Us">
               <a
                 href={`mailto:${CONTACT.email}`}
-                className="break-all text-sm font-semibold text-slate-600 transition-colors hover:text-[#542080]"
+                className="break-all text-sm font-semibold text-slate-600 hover:text-[#542080]"
               >
                 {CONTACT.email}
               </a>
@@ -243,21 +283,10 @@ export default function Contact() {
               <p className="mt-4 text-xs leading-6 text-slate-500">
                 Send us your questions or programme enquiries.
               </p>
-            </div>
+            </ContactCard>
 
             {/* WhatsApp */}
-            <div className="rounded-2xl border border-slate-100 bg-[#F8F9FE] p-7 transition-shadow hover:shadow-lg">
-              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-[#F1EBFA]">
-                <MessageCircle
-                  size={27}
-                  className="text-[#542080]"
-                />
-              </div>
-
-              <h3 className="mb-4 text-lg font-extrabold text-[#101A44]">
-                WhatsApp
-              </h3>
-
+            <ContactCard icon={<MessageCircle size={27} />} title="WhatsApp">
               <p className="mb-5 text-sm leading-7 text-slate-600">
                 Start a conversation with our team.
               </p>
@@ -271,30 +300,19 @@ export default function Contact() {
                 Chat With Us
                 <ExternalLink size={15} />
               </a>
-            </div>
+            </ContactCard>
 
             {/* Location */}
-            <div className="rounded-2xl border border-slate-100 bg-[#F8F9FE] p-7 transition-shadow hover:shadow-lg">
-              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-[#F1EBFA]">
-                <MapPin
-                  size={27}
-                  className="text-[#542080]"
-                />
-              </div>
-
-              <h3 className="mb-4 text-lg font-extrabold text-[#101A44]">
-                Visit Us
-              </h3>
-
+            <ContactCard icon={<MapPin size={27} />} title="Visit Us">
               <p className="text-sm leading-7 text-slate-600">
                 {CONTACT.location}
               </p>
-            </div>
+            </ContactCard>
           </div>
         </div>
       </section>
 
-      {/* Form and map */}
+      {/* Contact form and map */}
       <section className="bg-[#F8F9FE] px-5 py-20 sm:px-8 lg:py-24">
         <div className="mx-auto grid max-w-7xl gap-9 lg:grid-cols-2">
           {/* Form */}
@@ -310,8 +328,7 @@ export default function Contact() {
             <div className="mb-6 h-1 w-14 rounded-full bg-[#F5BE20]" />
 
             <p className="mb-8 text-sm leading-7 text-slate-600">
-              Complete the form below and our team
-              will review your enquiry.
+              Complete the form below and our team will review your enquiry.
             </p>
 
             {success && (
@@ -330,9 +347,8 @@ export default function Contact() {
                   </h3>
 
                   <p className="mt-2 text-sm leading-6 text-emerald-700">
-                    Thank you for contacting Innovar.
-                    Your enquiry has been received
-                    and is awaiting review.
+                    Thank you for contacting Innovar. Your enquiry has been
+                    received and is awaiting review.
                   </p>
                 </div>
               </div>
@@ -348,14 +364,8 @@ export default function Contact() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label
-                  htmlFor="full_name"
-                  className="mb-2 block text-sm font-semibold text-[#101A44]"
-                >
-                  Full Name *
-                </label>
-
+              {/* Name */}
+              <FormField label="Full Name" htmlFor="full_name" required>
                 <input
                   id="full_name"
                   name="full_name"
@@ -368,17 +378,11 @@ export default function Contact() {
                   maxLength={150}
                   required
                 />
-              </div>
+              </FormField>
 
+              {/* Contact information */}
               <div className="grid gap-5 sm:grid-cols-2">
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="mb-2 block text-sm font-semibold text-[#101A44]"
-                  >
-                    Email Address
-                  </label>
-
+                <FormField label="Email Address" htmlFor="email">
                   <input
                     id="email"
                     name="email"
@@ -390,16 +394,9 @@ export default function Contact() {
                     autoComplete="email"
                     maxLength={254}
                   />
-                </div>
+                </FormField>
 
-                <div>
-                  <label
-                    htmlFor="phone"
-                    className="mb-2 block text-sm font-semibold text-[#101A44]"
-                  >
-                    Phone Number
-                  </label>
-
+                <FormField label="Phone Number" htmlFor="phone">
                   <input
                     id="phone"
                     name="phone"
@@ -411,71 +408,60 @@ export default function Contact() {
                     autoComplete="tel"
                     maxLength={30}
                   />
-                </div>
+                </FormField>
               </div>
 
               <p className="text-xs text-slate-500">
-                Provide at least one contact method:
-                email or phone.
+                Provide at least one contact method: email or phone.
               </p>
 
-              <div>
-                <label
-                  htmlFor="inquiry_type"
-                  className="mb-2 block text-sm font-semibold text-[#101A44]"
+              {/* Institution */}
+              <FormField label="Enquiry For" htmlFor="institution" required>
+                <select
+                  id="institution"
+                  name="institution"
+                  value={form.institution}
+                  onChange={handleChange}
+                  className={inputClass}
+                  required
                 >
-                  Enquiry Type
-                </label>
+                  <option value="">Select institution</option>
 
+                  <option value="school">Innovar International School</option>
+
+                  <option value="institute">Innovar Institute</option>
+
+                  <option value="general">General Enquiry</option>
+                </select>
+              </FormField>
+
+              {/* Enquiry category */}
+              <FormField label="Enquiry Type" htmlFor="inquiry_type" required>
                 <select
                   id="inquiry_type"
                   name="inquiry_type"
                   value={form.inquiry_type}
                   onChange={handleChange}
                   className={inputClass}
+                  disabled={!form.institution}
+                  required
                 >
                   <option value="">
-                    Select enquiry type
+                    {form.institution
+                      ? "Select enquiry type"
+                      : "Select institution first"}
                   </option>
 
-                  <option value="School Admissions">
-                    International School Admissions
-                  </option>
-
-                  <option value="School Academics">
-                    School Academic Programmes
-                  </option>
-
-                  <option value="Day and Boarding">
-                    Day & Boarding
-                  </option>
-
-                  <option value="Institute Admissions">
-                    Innovar Institute Admissions
-                  </option>
-
-                  <option value="Institute Courses">
-                    Institute Training Programmes
-                  </option>
-
-                  <option value="Fees Structure">
-                    Fees & Payment Information
-                  </option>
-
-                  <option value="General Inquiry">
-                    General Enquiry
-                  </option>
+                  {availableInquiryOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
-              </div>
+              </FormField>
 
-              <div>
-                <label
-                  htmlFor="message"
-                  className="mb-2 block text-sm font-semibold text-[#101A44]"
-                >
-                  Your Message *
-                </label>
-
+              {/* Message */}
+              <FormField label="Your Message" htmlFor="message" required>
                 <textarea
                   id="message"
                   name="message"
@@ -487,8 +473,9 @@ export default function Contact() {
                   maxLength={5000}
                   required
                 />
-              </div>
+              </FormField>
 
+              {/* Submit */}
               <button
                 type="submit"
                 disabled={saving}
@@ -496,10 +483,7 @@ export default function Contact() {
               >
                 {saving ? (
                   <>
-                    <LoaderCircle
-                      size={19}
-                      className="animate-spin"
-                    />
+                    <LoaderCircle size={19} className="animate-spin" />
                     Sending Message...
                   </>
                 ) : (
@@ -511,13 +495,12 @@ export default function Contact() {
               </button>
 
               <p className="text-center text-xs leading-6 text-slate-500">
-                Your details will be used to respond
-                to your enquiry.
+                Your details will be used to respond to your enquiry.
               </p>
             </form>
           </div>
 
-          {/* Location and support */}
+          {/* Map and support */}
           <div className="flex flex-col gap-7">
             <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
               <iframe
@@ -531,10 +514,7 @@ export default function Contact() {
 
               <div className="p-7">
                 <div className="flex items-start gap-3">
-                  <MapPin
-                    size={22}
-                    className="mt-1 shrink-0 text-[#542080]"
-                  />
+                  <MapPin size={22} className="mt-1 shrink-0 text-[#542080]" />
 
                   <div>
                     <h3 className="mb-2 text-lg font-extrabold text-[#101A44]">
@@ -556,83 +536,44 @@ export default function Contact() {
                     </a>
 
                     <p className="mt-3 text-xs text-slate-500">
-                      Confirm the exact campus pin
-                      before travelling.
+                      Confirm the exact campus pin before travelling.
                     </p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Quick enquiries */}
+            {/* Quick links */}
             <div className="rounded-2xl bg-[#101A44] p-8 text-white sm:p-10">
               <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#F5BE20]">
                 Explore Innovar
               </p>
 
-              <h3 className="mb-5 text-2xl font-extrabold">
-                How Can We Help?
-              </h3>
+              <h3 className="mb-5 text-2xl font-extrabold">How Can We Help?</h3>
 
               <p className="mb-7 text-sm leading-8 text-white/75">
-                Find information about the school
-                or institute before making an enquiry.
+                Explore our educational opportunities and admissions
+                information.
               </p>
 
               <div className="space-y-4">
-                <Link
+                <QuickLink
                   to="/academics"
-                  className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 p-4 transition-colors hover:bg-white/10"
-                >
-                  <div className="flex items-center gap-3">
-                    <GraduationCap
-                      size={23}
-                      className="text-[#F5BE20]"
-                    />
+                  icon={<GraduationCap size={23} />}
+                  label="International School"
+                />
 
-                    <span className="text-sm font-bold">
-                      International School
-                    </span>
-                  </div>
-
-                  <ArrowRight size={17} />
-                </Link>
-
-                <Link
+                <QuickLink
                   to="/institute"
-                  className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 p-4 transition-colors hover:bg-white/10"
-                >
-                  <div className="flex items-center gap-3">
-                    <Laptop
-                      size={23}
-                      className="text-[#F5BE20]"
-                    />
+                  icon={<Laptop size={23} />}
+                  label="Innovar Institute"
+                />
 
-                    <span className="text-sm font-bold">
-                      Innovar Institute
-                    </span>
-                  </div>
-
-                  <ArrowRight size={17} />
-                </Link>
-
-                <Link
+                <QuickLink
                   to="/admissions"
-                  className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 p-4 transition-colors hover:bg-white/10"
-                >
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2
-                      size={23}
-                      className="text-[#F5BE20]"
-                    />
-
-                    <span className="text-sm font-bold">
-                      Admissions Information
-                    </span>
-                  </div>
-
-                  <ArrowRight size={17} />
-                </Link>
+                  icon={<CheckCircle2 size={23} />}
+                  label="Admissions Information"
+                />
               </div>
             </div>
           </div>
@@ -652,8 +593,7 @@ export default function Contact() {
             </h2>
 
             <p className="mt-3 text-sm leading-7 text-white/75">
-              Explore admissions and discover
-              the next step in your education.
+              Explore admissions and discover the next step in your education.
             </p>
           </div>
 
@@ -667,5 +607,78 @@ export default function Contact() {
         </div>
       </section>
     </>
+  );
+}
+
+function ContactCard({
+  icon,
+  title,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-100 bg-[#F8F9FE] p-7 transition-shadow hover:shadow-lg">
+      <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-[#F1EBFA] text-[#542080]">
+        {icon}
+      </div>
+
+      <h3 className="mb-4 text-lg font-extrabold text-[#101A44]">{title}</h3>
+
+      {children}
+    </div>
+  );
+}
+
+function FormField({
+  label,
+  htmlFor,
+  required = false,
+  children,
+}: {
+  label: string;
+  htmlFor: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label
+        htmlFor={htmlFor}
+        className="mb-2 block text-sm font-semibold text-[#101A44]"
+      >
+        {label}
+        {required && <span className="ml-1 text-red-500">*</span>}
+      </label>
+
+      {children}
+    </div>
+  );
+}
+
+function QuickLink({
+  to,
+  icon,
+  label,
+}: {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 p-4 transition-colors hover:bg-white/10"
+    >
+      <div className="flex items-center gap-3">
+        <span className="text-[#F5BE20]">{icon}</span>
+
+        <span className="text-sm font-bold">{label}</span>
+      </div>
+
+      <ArrowRight size={17} />
+    </Link>
   );
 }

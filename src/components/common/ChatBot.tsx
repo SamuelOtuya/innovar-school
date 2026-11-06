@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import {
   ArrowUpRight,
   Bot,
   CheckCircle2,
   MessageCircle,
-  Phone,
+
   Send,
   X,
 } from "lucide-react";
@@ -73,7 +73,7 @@ function getBotReply(question: string): string {
   ) {
     return (
       "Innovar International School is located along " +
-      "the Kisumu–Kakamega Highway in Kakamega, Kenya.\n\n" +
+      "the Kisumuâ€“Kakamega Highway in Kakamega, Kenya.\n\n" +
       "Please contact the school for the exact campus " +
       "directions before travelling."
     );
@@ -109,9 +109,9 @@ function getBotReply(question: string): string {
   ) {
     return (
       "Innovar has two admissions pathways:\n\n" +
-      "1. Innovar International School — Kindergarten, " +
+      "1. Innovar International School â€” Kindergarten, " +
       "Primary, Lower Secondary and IGCSE.\n\n" +
-      "2. Innovar Institute — technical and digital skills training.\n\n" +
+      "2. Innovar Institute â€” technical and digital skills training.\n\n" +
       "Visit the Admissions page to explore the process, " +
       "then contact the admissions team to confirm " +
       "availability, requirements and application arrangements."
@@ -148,10 +148,10 @@ function getBotReply(question: string): string {
       "Innovar International School provides international " +
       "education pathways from Kindergarten through IGCSE.\n\n" +
       "The academic stages include:\n" +
-      "• Kindergarten — Nursery and Reception\n" +
-      "• Primary — Years 1–6\n" +
-      "• Lower Secondary — Years 7–9\n" +
-      "• IGCSE — Years 10–11\n\n" +
+      "â€¢ Kindergarten â€” Nursery and Reception\n" +
+      "â€¢ Primary â€” Years 1â€“6\n" +
+      "â€¢ Lower Secondary â€” Years 7â€“9\n" +
+      "â€¢ IGCSE â€” Years 10â€“11\n\n" +
       "The school describes its academic pathways as " +
       "Cambridge and Pearson Edexcel. Contact the " +
       "school to confirm subjects and qualification options."
@@ -179,11 +179,11 @@ function getBotReply(question: string): string {
       "Innovar Institute focuses on technical and " +
       "digital skills development.\n\n" +
       "Training areas include:\n" +
-      "• Information Technology\n" +
-      "• Computer Programming\n" +
-      "• Web Development\n" +
-      "• Computer Networking\n" +
-      "• Cybersecurity\n\n" +
+      "â€¢ Information Technology\n" +
+      "â€¢ Computer Programming\n" +
+      "â€¢ Web Development\n" +
+      "â€¢ Computer Networking\n" +
+      "â€¢ Cybersecurity\n\n" +
       "Visit the Innovar Institute or Courses page " +
       "to explore published programmes. Contact the " +
       "institute for current availability and requirements."
@@ -489,7 +489,7 @@ export default function ChatBot() {
 
           <div className="shrink-0 bg-white px-4 pb-3 text-center">
             <p className="text-[10px] text-slate-400">
-              Automated responses · Confirm important details with Innovar
+              Automated responses Â· Confirm important details with Innovar
             </p>
           </div>
         </section>
@@ -497,3 +497,4 @@ export default function ChatBot() {
     </>
   );
 }
+

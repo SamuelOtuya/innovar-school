@@ -1,17 +1,16 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  ArrowRight,
-  BookOpen,
-  Clock,
-  GraduationCap,
-  ImageIcon,
-  Laptop,
-  School,
-} from "lucide-react";
+import { ArrowRight, Clock, ImageIcon } from "lucide-react";
 
 import { supabase } from "../../services/supabase";
 
+// Academic pathway images
+import kindergartenImg from "../../assets/images/kindergaten.webp";
+import primaryImg from "../../assets/images/primary.webp";
+import secondaryImg from "../../assets/images/secondary.webp";
+import igcseImg from "../../assets/images/igcse.webp";
+
+// Types
 type Programme = {
   id: string;
   slug: string;
@@ -21,14 +20,23 @@ type Programme = {
   image_url: string | null;
 };
 
-const academicPathways = [
+type AcademicPathway = {
+  title: string;
+  subtitle: string;
+  years: string;
+  description: string;
+  image: string;
+};
+
+// International Academic Pathways
+const academicPathways: AcademicPathway[] = [
   {
     title: "Kindergarten",
     subtitle: "Nursery & Reception",
     years: "Early Years",
     description:
       "A nurturing foundation for curiosity, confidence and early learning.",
-    icon: School,
+    image: kindergartenImg,
   },
   {
     title: "Primary Education",
@@ -36,7 +44,7 @@ const academicPathways = [
     years: "Primary",
     description:
       "Building strong academic foundations through an engaging international curriculum.",
-    icon: BookOpen,
+    image: primaryImg,
   },
   {
     title: "Lower Secondary",
@@ -44,7 +52,7 @@ const academicPathways = [
     years: "Secondary",
     description:
       "Developing knowledge, critical thinking and preparation for further study.",
-    icon: GraduationCap,
+    image: secondaryImg,
   },
   {
     title: "IGCSE",
@@ -52,7 +60,7 @@ const academicPathways = [
     years: "Cambridge & Pearson",
     description:
       "International examination pathways supporting academic progression and future ambitions.",
-    icon: Laptop,
+    image: igcseImg,
   },
 ];
 
@@ -61,28 +69,39 @@ export default function CoursesSection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  // Fetch featured technical programmes from Supabase
   useEffect(() => {
     let active = true;
 
     async function fetchFeaturedProgrammes() {
-      const { data, error: fetchError } = await supabase
-        .from("programmes")
-        .select("id,slug,title,category,duration,image_url")
-        .eq("status", "published")
-        .eq("featured", true)
-        .order("created_at", { ascending: false })
-        .limit(6);
+      try {
+        const { data, error: fetchError } = await supabase
+          .from("programmes")
+          .select("id,slug,title,category,duration,image_url")
+          .eq("status", "published")
+          .eq("featured", true)
+          .order("created_at", { ascending: false })
+          .limit(6);
 
-      if (!active) return;
+        if (!active) return;
 
-      if (fetchError) {
-        console.error("Failed to load programmes:", fetchError);
+        if (fetchError) {
+          console.error("Failed to load programmes:", fetchError);
+          setError(true);
+        } else {
+          setProgrammes(data || []);
+          setError(false);
+        }
+      } catch (err) {
+        if (!active) return;
+
+        console.error("Unexpected error loading programmes:", err);
         setError(true);
-      } else {
-        setProgrammes(data || []);
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
       }
-
-      setLoading(false);
     }
 
     fetchFeaturedProgrammes();
@@ -98,7 +117,7 @@ export default function CoursesSection() {
       className="bg-[#F8F9FE] px-5 py-20 sm:px-8 lg:py-24"
     >
       <div className="mx-auto max-w-7xl">
-        {/* Main heading */}
+        {/* MAIN SECTION HEADING */}
         <div className="mx-auto mb-14 max-w-3xl text-center">
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[#542080]">
             Our Learning Pathways
@@ -117,8 +136,9 @@ export default function CoursesSection() {
           </p>
         </div>
 
-        {/* Cambridge education */}
+        {/* INTERNATIONAL ACADEMIC PATHWAYS */}
         <div className="mb-20">
+          {/* SECTION HEADING */}
           <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
               <p className="mb-2 text-xs font-bold uppercase tracking-widest text-[#B8860B]">
@@ -132,53 +152,64 @@ export default function CoursesSection() {
 
             <Link
               to="/academics"
-              className="inline-flex items-center gap-2 text-sm font-bold text-[#542080] hover:text-[#B8860B]"
+              className="inline-flex items-center gap-2 text-sm font-bold text-[#542080] transition-colors hover:text-[#B8860B]"
             >
               Explore Academics
               <ArrowRight size={17} />
             </Link>
           </div>
 
+          {/* FOUR ACADEMIC PATHWAY CARDS */}
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {academicPathways.map((pathway) => {
-              const Icon = pathway.icon;
+            {academicPathways.map((pathway) => (
+              <article
+                key={pathway.title}
+                className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl motion-reduce:transform-none"
+              >
+                {/* PATHWAY IMAGE */}
+                <div className="relative h-56 overflow-hidden bg-[#F0E9FA]">
+                  <img
+                    src={pathway.image}
+                    alt={`${pathway.title} learning at Innovar International School`}
+                    loading="lazy"
+                    decoding="async"
+                    className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105 motion-reduce:transform-none"
+                  />
 
-              return (
-                <article
-                  key={pathway.title}
-                  className="group overflow-hidden rounded-2xl border border-slate-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl motion-reduce:transform-none"
-                >
-                  <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F0E9FA]">
-                    <Icon
-                      size={30}
-                      strokeWidth={1.7}
-                      className="text-[#542080]"
-                    />
-                  </div>
+                  {/* IMAGE GRADIENT */}
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#101A44]/20 via-transparent to-transparent" />
+                </div>
 
-                  <span className="mb-3 inline-block rounded-full bg-[#F7F1FF] px-3 py-1 text-[11px] font-bold text-[#542080]">
+                {/* CARD CONTENT */}
+                <div className="flex flex-1 flex-col p-6">
+                  {/* YEAR BADGE */}
+                  <span className="mb-3 inline-block w-fit rounded-full bg-[#F7F1FF] px-3 py-1 text-[11px] font-bold text-[#542080]">
                     {pathway.years}
                   </span>
 
-                  <h4 className="mb-1 text-lg font-extrabold text-[#101A44]">
+                  {/* TITLE */}
+                  <h4 className="mb-1 text-lg font-extrabold text-[#101A44] transition-colors duration-300 group-hover:text-[#542080]">
                     {pathway.title}
                   </h4>
 
+                  {/* SUBTITLE */}
                   <p className="mb-4 text-sm font-semibold text-[#B8860B]">
                     {pathway.subtitle}
                   </p>
 
+                  {/* DESCRIPTION */}
                   <p className="text-sm leading-7 text-slate-600">
                     {pathway.description}
                   </p>
-                </article>
-              );
-            })}
+                </div>
+              </article>
+            ))}
           </div>
         </div>
 
-        {/* TVET section */}
+        {/* INNOVAR INSTITUTE SECTION */}
         <div>
+          {/* SECTION HEADING */}
           <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
               <p className="mb-2 text-xs font-bold uppercase tracking-widest text-[#B8860B]">
@@ -192,13 +223,14 @@ export default function CoursesSection() {
 
             <Link
               to="/courses"
-              className="inline-flex items-center gap-2 text-sm font-bold text-[#542080] hover:text-[#B8860B]"
+              className="inline-flex items-center gap-2 text-sm font-bold text-[#542080] transition-colors hover:text-[#B8860B]"
             >
               View All Programmes
               <ArrowRight size={17} />
             </Link>
           </div>
 
+          {/* LOADING STATE */}
           {loading ? (
             <div
               className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
@@ -208,27 +240,31 @@ export default function CoursesSection() {
               {Array.from({ length: 6 }).map((_, index) => (
                 <div
                   key={index}
-                  className="h-72 animate-pulse rounded-2xl bg-slate-200"
+                  className="h-72 animate-pulse rounded-2xl bg-slate-200 motion-reduce:animate-none"
                 />
               ))}
             </div>
           ) : error ? (
+            /* ERROR STATE */
             <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-slate-600">
               Programmes could not be loaded at this time.
             </div>
           ) : programmes.length === 0 ? (
+            /* EMPTY STATE */
             <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
               <p className="text-slate-600">
                 Featured programmes will be available soon.
               </p>
+
               <Link
                 to="/contact"
-                className="mt-3 inline-flex font-bold text-[#542080]"
+                className="mt-3 inline-flex font-bold text-[#542080] hover:text-[#B8860B]"
               >
                 Enquire about our courses
               </Link>
             </div>
           ) : (
+            /* FEATURED TECHNICAL PROGRAMMES */
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {programmes.map((programme) => (
                 <Link
@@ -236,12 +272,14 @@ export default function CoursesSection() {
                   to={`/programmes/${programme.slug}`}
                   className="group overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl motion-reduce:transform-none"
                 >
+                  {/* PROGRAMME IMAGE */}
                   <div className="relative h-48 overflow-hidden bg-[#F0E9FA]">
                     {programme.image_url ? (
                       <img
                         src={programme.image_url}
                         alt={programme.title}
                         loading="lazy"
+                        decoding="async"
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transform-none"
                       />
                     ) : (
@@ -250,16 +288,19 @@ export default function CoursesSection() {
                       </div>
                     )}
 
+                    {/* CATEGORY BADGE */}
                     <span className="absolute bottom-4 left-4 rounded-full bg-white/95 px-3 py-1.5 text-[11px] font-bold text-[#542080] shadow-sm">
                       {programme.category}
                     </span>
                   </div>
 
+                  {/* PROGRAMME CONTENT */}
                   <div className="p-6">
                     <h4 className="mb-4 text-lg font-extrabold leading-snug text-[#101A44] transition-colors group-hover:text-[#542080]">
                       {programme.title}
                     </h4>
 
+                    {/* DURATION */}
                     {programme.duration && (
                       <div className="mb-5 flex items-center gap-2 text-sm text-slate-500">
                         <Clock size={16} className="text-[#B8860B]" />
@@ -267,9 +308,13 @@ export default function CoursesSection() {
                       </div>
                     )}
 
+                    {/* LEARN MORE */}
                     <span className="inline-flex items-center gap-2 text-sm font-bold text-[#542080]">
                       Learn More
-                      <ArrowRight size={16} />
+                      <ArrowRight
+                        size={16}
+                        className="transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transform-none"
+                      />
                     </span>
                   </div>
                 </Link>
